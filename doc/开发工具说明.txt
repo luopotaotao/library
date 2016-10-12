@@ -1,0 +1,17 @@
+开发工具说明
+	日期:2016/10/09
+	作者:马伟
+	版本:1.0
+	说明:开发环境工具介绍
+
+	集成开发环境:
+		WebStorm(前端开发需要安装liveEdit插件)
+	配合使用Chrome浏览器:
+		后端:
+			Postman插件,用来测试接口是否能够按需返回数据
+		前端:
+			JetBrains IDE Support 插件,可实现页面编辑所见即所得,自动应用修改
+			步骤:
+				1.npm install http-server
+				2.打开ide的Terminal,执行 http-server -p 9000(端口号可自定)
+				3.访问要调试的页面,在页面上右键,选择Inspect in WebStorm

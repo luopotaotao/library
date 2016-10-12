@@ -1,0 +1,257 @@
+<div style="width:60%">
+    <input class="easyui-searchbox" data-options="prompt:'请输入员工姓名或者员工编号',menu:'#users_mm',searcher:doSearch"
+           style="width:100%">
+</div>
+<div id="users_mm">
+    <div data-options="name:'0',iconCls:'icon-ok'">全部</div>
+    <div data-options="name:'SUPER'">超级管理员</div>
+    <div data-options="name:'ADMIN'">管理员</div>
+    <div data-options="name:'CUSTOM'">普通用户</div>
+</div>
+<script>
+    function doSearch(name, role) {
+        $('#users_dg').datagrid('load',{
+            name:name,
+            role:role=='0'?'':role
+        });
+    }
+</script>
+<table id="users_dg" style="height: 97%;width: 99%"></table>
+<div id="users_dlg_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
+     data-options="
+                    title: '添加员工',
+                    closed: true,
+                    modal: true,
+                    draggable: false,
+                    iconCls: 'icon-add',
+                    buttons: [{
+                    text: '保存',
+                    iconCls: 'icon-ok',
+                    handler: $.users.submitForm
+                    }, {
+                    text: '取消',
+                    iconCls: 'icon-cancel',
+                    handler: $.users.closeEditDialog
+                    }]
+                    ">
+    <form id="users_ff" class="easyui-form" method="post" data-options="novalidate:true">
+        <div style="margin-bottom:20px;display: none">
+            <input class="easyui-textbox" name="id" style="width:100%" data-options="label:'员工记录id:',required:true">
+        </div>
+        <div style="margin-bottom:20px">
+            <input class="easyui-textbox" name="code" style="width:100%"
+                   data-options="label:'员工编号:',required:true">
+        </div>
+        <div style="margin-bottom:20px">
+            <input class="easyui-textbox" name="name" style="width:100%"
+                   data-options="label:'员工姓名:',required:true">
+        </div>
+        <div style="margin-bottom:20px">
+            <select class="easyui-combobox" name="gender" label="员工性别" style="width:100%">
+                <option value="M">男</option>
+                <option value="F">女</option>
+            </select>
+        </div>
+        <div style="margin-bottom:20px">
+            <input class="easyui-textbox" name="phone" style="width:100%"
+                   data-options="label:'联系方式:',required:true">
+        </div>
+        <div style="margin-bottom:20px">
+            <input class="easyui-textbox" name="email" style="width:100%"
+                   data-options="label:'电子邮件:',required:true">
+        </div>
+        <div style="margin-bottom:20px">
+            <select class="easyui-combobox" name="role" label="员工角色" style="width:100%">
+                <option value="SUPER">超级管理</option>
+                <option value="ADMIN">管理员</option>
+                <option value="CUSTOM">普通用户</option>
+            </select>
+        </div>
+
+    </form>
+</div>
+<script type="text/javascript">
+    $(function () {
+        $('#users_dg').datagrid({
+            url: '/users/list',
+            method: 'get',
+            iconCls: 'icon-save',
+            fitColumns: true,
+            singleSelect: false,
+            pagination: true,
+            pageSize: 10,
+            toolbar: [{
+                text: '添加',
+                iconCls: 'icon-add',
+                handler: function () {
+                    showEditDialog();
+                }
+            }, {
+                text: '编辑',
+                iconCls: 'icon-edit',
+                handler: function () {
+                    var rows = $('#users_dg').datagrid('getChecked');
+                    if (!rows || !rows.length) {
+                        $.messager.alert('提示', '请选择要编辑的行!');
+                        return;
+                    }
+                    if (rows.length > 1) {
+                        $.messager.alert('提示', '只能选择一行进行编辑!');
+                        return;
+                    } else {
+                        showEditDialog(rows[0]);
+                    }
+                }
+            }, {
+                text: '删除',
+                iconCls: 'icon-remove',
+                handler: function () {
+                    var rows = $('#users_dg').datagrid('getChecked');
+                    if (!rows || !rows.length) {
+                        $.messager.alert('提示', '请选择要删除的行!');
+                        return;
+                    }
+                    $.messager.confirm('提示', '是否确定删除这' + rows.length + '条数据?', function (r) {
+                        if (r) {
+                            remove($.map(rows, function (row, i) {
+                                return row.id;
+                            }), function () {
+                                $('#users_dg').datagrid('reload');
+                            });
+                        }
+                    });
+                }
+            }],
+            columns: [[
+                {field: 'ck', checkbox: true},
+                {field: 'id', title: 'ID', hidden: true},
+                {field: 'code', title: '员工编号'},
+                {field: 'name', title: '员工姓名'},
+                {
+                    field: 'gender', title: '员工性别', formatter: function (val) {
+                    return {'M': '男', 'F': '女'}[val] || '';
+                }
+                },
+                {field: 'phone', title: '联系方式'},
+                {field: 'email', title: '电子邮件'},
+                {
+                    field: 'role', title: '员工角色', formatter: function (val, row) {
+                    return {SUPER: '超级管理员', ADMIN: '管理员', CUSTOM: '普通用户'}[val] || '';
+                }
+                }
+            ]],
+            onHeaderContextMenu: function (e, field) {
+                e.preventDefault();
+                if (!$.cmenu) {
+                    createColumnMenu();
+                }
+                $.cmenu.menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            }
+        });
+        function createColumnMenu() {
+            $.cmenu = $('<div/>').appendTo('body');
+            $.cmenu.menu({
+                onClick: function (item) {
+                    if (item.iconCls == 'icon-ok') {
+                        $('#users_dg').datagrid('hideColumn', item.name);
+                        $.cmenu.menu('setIcon', {
+                            target: item.target,
+                            iconCls: 'icon-empty'
+                        });
+                    } else {
+                        $('#users_dg').datagrid('showColumn', item.name);
+                        $.cmenu.menu('setIcon', {
+                            target: item.target,
+                            iconCls: 'icon-ok'
+                        });
+                    }
+                }
+            });
+            var fields = $('#users_dg').datagrid('getColumnFields');
+            for (var i = 0; i < fields.length; i++) {
+                var field = fields[i];
+                var col = $('#users_dg').datagrid('getColumnOption', field);
+                $.cmenu.menu('appendItem', {
+                    text: col.title,
+                    name: field,
+                    iconCls: 'icon-ok'
+                });
+            }
+        }
+
+        function showEditDialog(data) {
+            var $form = $('#users_ff');
+            if (data) {
+                $form.form({url: '/users/update'});
+                $form.form('load', data);
+                $('#users_dlg_edit').dialog({title: '编辑用户'});
+            } else {
+                $form.form({url: '/users/add'});
+                $('#users_dlg_edit').dialog({title: '新增用户'});
+            }
+            $('#users_dlg_edit').dialog('open');
+        }
+
+        function submitForm() {
+            $.messager.progress({title:'数据保存中,请稍后...'});	// display the progress bar
+            $('#users_ff').form('submit', {
+                onSubmit: function () {
+                    var isValid = $(this).form('validate');
+                    if (!isValid) {
+                        $.messager.progress('close');	// hide progress bar while the form is invalid
+                    }
+                    return isValid;	// return false will stop the form submission
+                },
+                success: function (data) {
+                    data = $.parseJSON(data);
+                    $.messager.progress('close');	// hide progress bar while submit successfully
+                    if (data.flag) {
+                        $.messager.alert('提示', '保存成功!');
+                        $('#users_dg').datagrid('reload');
+                        closeEditDialog();
+                    } else {
+                        $.messager.alert('提示', data.message || '保存失败,请检查网络连接或者权限!');
+                    }
+                }
+            });
+        }
+
+        function closeEditDialog() {
+            $('#users_ff').form('clear');
+            $('#users_dlg_edit').dialog('close');
+        }
+
+        function remove(ids,callback) {
+            $.messager.progress({title:'正在删除,请稍后...'});	// display the progress bar
+            $.ajax({
+                url: '/users/delete',
+                data: {ids: ids},
+                type: 'post',
+                dataType: 'json'
+            }).done(function (ret) {
+                if (ret && ret.flag) {
+                    if($.isFunction(callback)){
+                        callback();
+                    }
+                    $.messager.alert('提示', '删除成功!');
+                } else {
+                    $.messager.alert('提示', ret, msg || '删除失败!');
+                }
+            }).fail(function () {
+                $.messager.alert('提示', '删除失败!');
+            }).always(function () {
+                $.messager.progress('close');
+            });
+        }
+        $.extend({
+            users: {
+                submitForm: submitForm,
+                closeEditDialog: closeEditDialog
+            }
+        });
+    });
+
+</script>

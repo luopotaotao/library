@@ -1,0 +1,90 @@
+<div style="width:60%">
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',menu:'#books_query_mm',searcher:doSearch" style="width:100%">
+</div>
+<div id="books_query_mm">
+    <div data-options="name:'',iconCls:'icon-ok'">全部</div>
+    <div data-options="name:'loan'">借出</div>
+    <div data-options="name:'damaged'">损坏/丢失</div>
+    <div data-options="name:'inquiry'">入库</div>
+</div>
+<script>
+    function doSearch(name, return_status) {
+        $('#books_query_dg').datagrid('load',{
+            name:name,
+            return_status:return_status=='0'?'':return_status
+        });
+    }
+</script>
+<table id="books_query_dg" style="height: 97%;width: 99%"></table>
+<script type="text/javascript">
+    $(function () {
+        $('#books_query_dg').datagrid({
+            url: '/books/list',
+            method: 'get',
+            iconCls: 'icon-save',
+            fitColumns: true,
+            singleSelect: false,
+            pagination: true,
+            pageSize: 10,
+            columns: [[
+                {field: 'id', title: 'ID', hidden: true},
+                {field: 'code', title: '标号'},
+                {field: 'name', title: '名称'},
+                {field: 'author', title: '作者'},
+                {field: 'translator', title: '译者'},
+                {field: 'publisher', title: '出版社'},
+                {field: 'date', title: '出版日期',formatter:function (val,row) {
+                    debugger;
+                    return val?$.formatDate(new Date(val),'yyyy-MM-dd'):null;
+                }},
+                {field: 'price', title: '价格'},
+                {
+                    field: 'status', title: '状态', formatter: function (val, row) {
+                    return {IN: '在库', OUT: '借出', MISSED: '损毁遗失'}[val];
+                }
+                }
+            ]],
+            onHeaderContextMenu: function (e, field) {
+                e.preventDefault();
+                if (!$.cmenu) {
+                    createColumnMenu();
+                }
+                $.cmenu.menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            }
+        });
+        function createColumnMenu() {
+            $.cmenu = $('<div/>').appendTo('body');
+            $.cmenu.menu({
+                onClick: function (item) {
+                    if (item.iconCls == 'icon-ok') {
+                        $('#books_query_dg').datagrid('hideColumn', item.name);
+                        $.cmenu.menu('setIcon', {
+                            target: item.target,
+                            iconCls: 'icon-empty'
+                        });
+                    } else {
+                        $('#books_query_dg').datagrid('showColumn', item.name);
+                        $.cmenu.menu('setIcon', {
+                            target: item.target,
+                            iconCls: 'icon-ok'
+                        });
+                    }
+                }
+            });
+            var fields = $('#books_query_dg').datagrid('getColumnFields');
+            for (var i = 0; i < fields.length; i++) {
+                var field = fields[i];
+                var col = $('#books_query_dg').datagrid('getColumnOption', field);
+                $.cmenu.menu('appendItem', {
+                    text: col.title,
+                    name: field,
+                    iconCls: 'icon-ok'
+                });
+            }
+        }
+    });
+
+</script>
