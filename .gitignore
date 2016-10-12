@@ -15,3 +15,6 @@ hs_err_pid*
 *.iml
 target
 .idea
+
+#webstorm files
+node_modules.*
