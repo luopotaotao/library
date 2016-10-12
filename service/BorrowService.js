@@ -19,22 +19,21 @@ function borrow(user_id, period, book_ids, callback) {
     var borrow_date = new Date();
     var deadline = new Date(borrow_date.getTime() + 1000 * 60 * 60 * 24 * period);
     seq.transaction(function (t) {
-        Record.bulkCreate(book_ids.map(function (book_id) {
-            return {
+        return Promise.all(book_ids.map(function (book_id) {
+            return Record.create({
                 code: code,
                 userId: user_id,
                 bookId: book_id,
                 borrow_date: borrow_date,
                 deadline: deadline,
                 return_status: RECORD_STATUS.BORROWED
-            }
+            }, {transaction: t});
         }));
-        //TODO mark books borrowed
-    }).then(function (result) {
-        callback(result);
-    }).catch(function (err) {
-        callback();
-    });
+    })
+        .then(callback)
+        .catch(function (err) {
+            callback();
+        });
 
 }
 function query(username, bookname, callback) {
@@ -72,7 +71,11 @@ function query(username, bookname, callback) {
             model: Book,
             where: book_where
         }]
-    }).then(callback);
+    }).then(function (result) {
+        result.total = result.count;
+        delete result.count;
+        callback(result);
+    });
 }
 /**
  *
@@ -109,7 +112,9 @@ function return_(return_list, callback) {
 // return_([{record_id:1,return_status:RECORD_STATUS.RETURNED}],function (result) {
 //     console.log(JSON.stringify(result.length));
 // });
-
+// borrow(1,30,[1,2],function (result) {
+//     console.log(result);
+// })
 module.exports = {
     borrow: borrow,
     return_: return_,

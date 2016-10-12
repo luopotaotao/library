@@ -13,6 +13,7 @@ var booksQuery = require('./routes/booksQuery');
 var books = require('./routes/books');
 var borrow = require('./routes/borrow');
 var ret = require('./routes/return');
+var records = require('./routes/records');
 
 var app = express();
 
@@ -47,6 +48,7 @@ app.use('/books', books);
 app.use('/users', users);
 app.use('/borrow',borrow);
 app.use('/return',ret);
+app.use('/records',records);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

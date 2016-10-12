@@ -1,16 +1,18 @@
+
 <div style="width:60%">
     <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',searcher:doSearch" style="width:100%">
 </div>
 <script>
     function doSearch(name) {
+
         $('#borrow_dg').datagrid('load',{
             name:name
         });
     }
 </script>
 <table id="borrow_dg" style="height: 97%;width: 99%"></table>
-<div id="borrow_dlg_edit" class="easyui-dialog" style="width:100%;max-width:800px;padding:30px 60px;" data-options="
-    title: '查看借阅库',
+<div id="borrow_dlg_cache" class="easyui-dialog" style="width:100%;max-width:800px;padding:30px 60px;" data-options="
+    title: '借阅一览表',
     closed: true,
     modal: true,
     draggable: false,
@@ -31,13 +33,11 @@
         <div class="easyui-panel" data-options="title:'借阅信息'" style="padding:10px;">
             <form id="borrow_dialog_ff" class="easyui-form" method="post" data-options="novalidate:true,">
                 <div style="margin-bottom:20px">
-                    <input class="easyui-textbox select" name="code" style="width:100%"
-                           data-options="label:'借阅人编号:',required:true,editable:false,buttonText:'选择',
-                   buttonIcon:'icon-search'" url="borrow_index_dialog.ejs">
+                    <input id="borrow_select_user_code" name="user_id" style="width:100%">
                 </div>
                 <div style="margin-bottom:20px">
-                    <input class="easyui-textbox" name="name" style="width:100%"
-                           data-options="label:'借阅人姓名:',required:true">
+                    <input  id="borrow_select_user_name" class="easyui-textbox" style="width:100%"
+                           data-options="label:'借阅人姓名:',required:true,disabled:true">
                 </div>
                 <div style="margin-bottom:20px">
                     <input class="easyui-textbox dt" name="borrow_date" style="width:100%"
@@ -48,7 +48,7 @@
                            data-options="label:'应归还日期:',required:true">
                 </div>
                 <div style="margin-bottom:20px">
-                    <input class="easyui-textbox" name="data" style="width:100%"
+                    <input id="borrow_select_user_period" class="easyui-textbox" name="data" style="width:100%"
                            data-options="label:'借阅周期:',required:true">
                 </div>
 
@@ -56,38 +56,50 @@
         </div>
     </div>
 </div>
+
 <script>
     $(function () {
-        $('input.select').textbox({
+        $.extend({
+            borrow: {
+                submitForm: submitForm,
+                closeEditDialog: closeEditDialog
+            }
+        });
+        $('#borrow_select_user_code').textbox({
+            label:'借阅人编号:',
+            required:true,
+            editable:false,
+            buttonText:'选择',
+            buttonIcon:'icon-search',
             onClickButton: function () {
-                var url = $(this).attr('url');
-                selectChild(url, function (data) {
-                    var names = [];
-                    var ids = [];
-                    $.each(data, function (i, item) {
-                        ids.push(item.id);
-                        names.push(item.name);
-                    });
-                    $(this).textbox('setValue', ids);
-                    $(this).textbox('setText', names);
+                var _this = this;
+                selectUser(function (data) {
+                    var name = data[0].name;
+                    var id = data[0].id;
+                    var code = data[0].code;
+                    var period = data[0].period;
+                    $(_this).textbox('setValue', id);
+                    $(_this).textbox('setText', code);
+                    $('#borrow_select_user_name').textbox('setText',name);
+                    $('#borrow_select_user_period').textbox('setText',period);
                 });
             }
         });
-        function selectChild(url, callback) {
+        function selectUser(callback) {
             var $doc = $(document);
             var height = screen.availHeight*0.5, width = screen.availWidth*0.3;
-            var $div = $('<div/>', {'height':height, width:width});
+            var $div = $('<div/>',{height:height,width:width});
             $div.dialog({
                 title: '请选择',
                 closed: false,
                 cache: true,
-                href: '/books/list',
+                href: '/borrow/select_user',
                 modal: true,
                 buttons: [{
                     text: '确定',
                     handler: function () {
-                        if (true || $.isFunction(callback)) {
-                            var data = $div.find('#borrow_dialog_dialog_dg').datagrid('getChecked');
+                        if ($.isFunction(callback)) {
+                            var data = $div.find('#borrow_dg_users').datagrid('getChecked');
                             if (data && data.length > 0) {
                                 console.log(data);
                                 $div.dialog('close');
@@ -109,35 +121,16 @@
             showSeconds: false,
         });
         $('#borrow_dialog_dg').datagrid({
-            url: '/books/list',
-            method: 'get',
             fitColumns: true,
-            singleSelect: false,
-            toolbar: [{
-                text: '删除',
-                iconCls: 'icon-cancel',
-                handler: function () {
-                    var rows = $('#borrow_dialog_dg').datagrid('getChecked');
-                    if (!rows || !rows.length) {
-                        $.messager.alert('提示', '请选择要删除的行!');
-                        return;
-                    }
-                    $.messager.confirm('提示', '是否确定删除这' + rows.length + '条数据?', function (r) {
-                        if (r) {
-                            remove($.map(rows, function (i, row) {
-                                return row.id;
-                            }), function () {
-                                $('#borrow_dialog_dg').datagrid('reload');
-                            });
-                        }
-                    });
-                }
-            }],
+            singleSelect: true,
             columns: [[
                 {field: 'ck', checkbox: true},
                 {field: 'id', title: 'ID', hidden: true},
                 {field: 'code', title: '图书编号'},
-                {field: 'name', title: '图书名称'}
+                {field: 'name', title: '图书名称'},
+                {field:'null',title:'操作',formatter:function (val,row) {
+                    return '<a onclick="function () { }">删除</a>';
+                }}
             ]]
         });
         $('#borrow_dg').datagrid({
@@ -148,6 +141,7 @@
             singleSelect: false,
             pagination: true,
             pageSize: 10,
+            rownumbers:true,
             toolbar: [{
                 text: '加入借阅库',
                 handler: function () {
@@ -156,20 +150,15 @@
                         $.messager.alert('提示', '请选择要加入的行!');
                         return;
                     }
-                    $.messager.confirm('提示', '是否确定加入这' + rows.length + '条数据?', function (r) {
-                        if (r) {
-                            adds($.map(rows, function (i, row) {
-                                return row.id;
-                            }), function () {
-                                $('#borrow_dg').datagrid('reload');
-                            });
-                        }
-                    });
+                    var cache = $('#borrow_dg').data('cache')||[];
+                    cache = cache.concat(rows);
+                    $('#borrow_dg').data('cache',cache);
+
                 }
             }, {
                 text: '查看借阅库',
                 handler: function () {
-                    showEditDialog();
+                    showCacheDialog();
                 }
             }],
             columns: [[
@@ -181,6 +170,28 @@
                 {field: 'deadline', title: '应归还日期'},
                 {field: 'e_user_id', title: '借阅人'}
 
+            ]],
+            columns: [[
+                {field: 'ck', checkbox: true},
+                {field: 'id', title: 'ID', hidden: true},
+                {field: 'code', title: '标号'},
+                {field: 'name', title: '名称'},
+                {field: 'author', title: '作者'},
+                {field: 'translator', title: '译者'},
+                {field: 'publisher', title: '出版社'},
+                {field: 'date', title: '出版日期',formatter:function (val,row) {
+                    debugger;
+                    return val?$.formatDate(new Date(val),'yyyy-MM-dd'):null;
+                }},
+                {field: 'price', title: '价格'},
+                {
+                    field: 'status', title: '状态', formatter: function (val, row) {
+                    return {IN: '在库', OUT: '借出', MISSED: '损毁遗失'}[val];
+                }
+                },
+                {field: 'borrow_data', title: '借阅日期'},
+                {field: 'deadline', title: '应归还日期'},
+                {field: 'e_user_id', title: '借阅人'}
             ]],
             onHeaderContextMenu: function (e, field) {
                 e.preventDefault();
@@ -224,64 +235,70 @@
             }
         }
 
-        function showEditDialog(data) {
-            if (data) {
-                $('#borrow_ff').form({url: '/books/update'});
-                $('#borrow_ff').form('load', data);
-                $('#borrow_dlg_edit').dialog({url: 'edit'});
-            } else {
-                $('#borrow_ff').form({url: '/books/add'});
-                $('#borrow_dlg_edit').dialog({url: 'add'});
+        function showCacheDialog(data) {
+            var rows = $('#borrow_dg').data('cache');
+            if(rows&&rows.length){
+                var $dlg = $('#borrow_dlg_cache');
+                $dlg.find('#borrow_dialog_dg').datagrid('loadData',{rows:rows});
+                $('#borrow_dlg_cache').dialog('open');
+            }else{
+                $.messager.alert('提示','借阅库没有数据!');
             }
-            $('#borrow_dlg_edit').dialog('open');
+
         }
 
         function submitForm() {
-            $.messager.progress({title:'数据保存中,请稍后...'});	// display the progress bar
-            $('#borrow_ff').form('submit', {
-                onSubmit: function () {
-                    var isValid = $(this).form('validate');
-                    if (!isValid) {
-                        $.messager.progress('close');	// hide progress bar while the form is invalid
-                    }
-                    return isValid;	// return false will stop the form submission
-                },
-                success: function (data) {
-                    $.messager.progress('close');	// hide progress bar while submit successfully
-
-                    if (data.flag) {
-                        $.messager.alert('提示', '保存成功!');
-                        $('#borrow_dialog_dg').datagrid('reload');
-                        closeEditDialog();
-                    } else {
-                        $.messager.alert('提示', data.message || '保存失败,请检查网络连接或者权限!');
-                    }
+            var user_id = $('#borrow_select_user_code').textbox('getValue');
+            var books = $('#borrow_dg').data('cache');
+            if(!user_id){
+                $.messager.alert('提示','请选择借书人!');
+                return;
+            }
+            if(!books||books.length<1){
+                $.messager.alert('提示','请选择借阅的书目!');
+                return;
+            }
+            var book_ids = $.map(books,function (book) {
+                return book.id;
+            });
+            $.messager.progress({title:'数据保存中,请稍后...'});
+            $.ajax({
+                url:'/borrow/action',
+                type:'post',
+                dataType:'json',
+                data:{
+                    user_id:user_id,
+                    book_ids:book_ids
                 }
+            }).done(function (ret) {
+                if (ret.flag) {
+                    $.messager.alert('提示', '保存成功!');
+                    $('#borrow_dialog_dg').datagrid('reload');
+                    closeEditDialog();
+                } else {
+                    $.messager.alert('提示', data.msg || '保存失败,请检查网络连接或者权限!');
+                }
+            }).fail(function () {
+                $.messager.alert('提示', data.msg || '保存失败,请检查网络连接或者权限!');
+            }).always(function () {
+                $.messager.progress('close');
             });
         }
 
         function closeEditDialog() {
             $('#borrow_ff').form('clear');
-            $('#borrow_dlg_edit').dialog('close');
+            $('#borrow_dlg_cache').dialog('close');
         }
 
-        function adds(ids,callback) {
-            $.ajax({
-                url: '/books/add',//TODO url
-                data: {ids: ids},
-                type: 'post',
-                dataType: 'json'
-            }).done(function (ret) {
-                if (ret && ret.flag) {
-                    $.messager.alert('提示', '加入成功!');
-                } else {
-                    $.messager.alert('提示', ret, msg || '加入失败!');
-                }
-            }).fail(function () {
-                $.messager.alert('提示', '加入失败!');
-            }).always(function () {
-                $.messager.progress('close');
-            });
+        function removeCache(obj) {
+            var rows = $('#borrow_dg').data('cache');
+            if(rows&&row.length){
+                rows = $.filter(rows,function (i,row) {
+                    return row.id!=obj.id;
+                });
+                $('#borrow_dg').data('cache',rows);
+            }
+
         }
 
         function remove(ids,callback) {
@@ -302,13 +319,6 @@
                 $.messager.progress('close');
             });
         }
-
-        $.extend({
-            borrow: {
-                submitForm: submitForm,
-                closeEditDialog: closeEditDialog
-            }
-        });
-    })
+    });
 
 </script>

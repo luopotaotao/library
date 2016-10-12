@@ -1,0 +1,48 @@
+<div style="width:60%">
+    <input class="easyui-searchbox" data-options="prompt:'请输入员工姓名或者员工编号',menu:'#borrow_users_mm',searcher:doSearch"
+           style="width:100%">
+</div>
+<div id="borrow_users_mm">
+    <div data-options="name:'0',iconCls:'icon-ok'">全部</div>
+    <div data-options="name:'SUPER'">超级管理员</div>
+    <div data-options="name:'ADMIN'">管理员</div>
+    <div data-options="name:'CUSTOM'">普通用户</div>
+</div>
+<script>
+    function doSearch(name, role) {
+        $('#users_dg').datagrid('load', {
+            name: name,
+            role: role == '0' ? '' : role
+        });
+    }
+</script>
+<table id="borrow_dg_users" class="easyui-datagrid" style="height: 80%;width: 80%"
+       data-options="
+            url: '/users/list',
+            method: 'get',
+            fitColumns: true,
+            singleSelect: true,
+            pagination: true,
+            pageSize: 10,
+        ">
+    <thead>
+    <tr>
+        <th data-options="field: 'ck', checkbox: true"></th>
+        <th data-options="field: 'id', title: 'ID', hidden:true"></th>
+        <th data-options="field: 'code', title: '员工编号', width: 120"></th>
+        <th data-options="field: 'name', title: '员工姓名', width: 120"></th>
+        <th data-options="field: 'gender', title: '员工性别', width: 80, align: 'right',
+           formatter: function (val, row) {
+            return {'M': '男', 'F': '女'}[val] || '';
+            }
+        "></th>
+        <th data-options="field: 'phone', title: '联系方式', width: 80, align: 'right'"></th>
+        <th data-options="field: 'email', title: '电子邮件', width: 80, align: 'right'"></th>
+        <th data-options="field: 'role', title: '员工角色', width: 80, align: 'right',
+           formatter: function (val, row) {
+            return {SUPER: '超级管理员', ADMIN: '管理员', CUSTOM: '普通用户'}[val] || '';
+            }
+        "></th>
+    </tr>
+    </thead>
+</table>
