@@ -1,0 +1,137 @@
+<div style="width:60%">
+    <input class="easyui-searchbox" data-options="prompt:'请输入员工编号/员工名称',searcher:function (name) {
+        $('#borrow_dialog_dialog_dg').datagrid('load',{
+            name:encodeURIComponent(name)
+        });
+    }" style="width:300px;">
+</div>
+<script>
+    function doSearch(name) {
+        $('#borrow_dialog_dialog_dg').datagrid('load',{
+            name:name
+        });
+    }
+</script>
+<table id="borrow_dialog_dialog_dg" style="width: 99%"></table>
+<script>
+    $('#borrow_dialog_dialog_dg').datagrid({
+        url: '/books/list',
+        method: 'get',
+        iconCls: 'icon-save',
+//            width: 700,
+//            height: 250,
+        fitColumns: true,
+        singleSelect: true,
+        pagination: true,
+        pageSize: 10,
+        columns: [[
+            {field: 'ck', checkbox: true},
+            {field: 'id', title: 'ID', hidden: true},
+            {field: 'code', title: '员工编号'},
+            {field: 'name', title: '员工名称'}
+        ]],
+        onHeaderContextMenu: function (e, field) {
+            e.preventDefault();
+            if (!$.cmenu) {
+                createColumnMenu();
+            }
+            $.cmenu.menu('show', {
+                left: e.pageX,
+                top: e.pageY
+            });
+        }
+    });
+    function createColumnMenu() {
+        $.cmenu = $('<div/>').appendTo('body');
+        $.cmenu.menu({
+            onClick: function (item) {
+                if (item.iconCls == 'icon-ok') {
+                    $('#return_dg').datagrid('hideColumn', item.name);
+                    $.cmenu.menu('setIcon', {
+                        target: item.target,
+                        iconCls: 'icon-empty'
+                    });
+                } else {
+                    $('#return_dg').datagrid('showColumn', item.name);
+                    $.cmenu.menu('setIcon', {
+                        target: item.target,
+                        iconCls: 'icon-ok'
+                    });
+                }
+            }
+        });
+        var fields = $('#return_dg').datagrid('getColumnFields');
+        for (var i = 0; i < fields.length; i++) {
+            var field = fields[i];
+            var col = $('#return_dg').datagrid('getColumnOption', field);
+            $.cmenu.menu('appendItem', {
+                text: col.title,
+                name: field,
+                iconCls: 'icon-ok'
+            });
+        }
+    }
+
+    function showEditDialog(data) {
+        if (data) {
+            $('#return_dlg_edit').dialog({url: 'edit'});
+        } else {
+            $('#return_dlg_edit').dialog({url: 'add'});
+        }
+        $('#return_dlg_edit').dialog('open');
+    }
+    function submitForm() {
+        $.messager.progress();	// display the progress bar
+        $('#return_dialog_dg_ff').form('submit', {
+            onSubmit: function () {
+                var isValid = $(this).form('validate');
+                if (!isValid) {
+                    $.messager.progress('close');	// hide progress bar while the form is invalid
+                }
+                return isValid;	// return false will stop the form submission
+            },
+            success: function (data) {
+                $.messager.progress('close');	// hide progress bar while submit successfully
+
+                if (data.flag) {
+                    $.messager.alert('提示', '保存成功!');
+                    closeEditDialog();
+                } else {
+                    $.messager.alert('提示', data.message || '保存失败,请检查网络连接或者权限!');
+                }
+            }
+        });
+    }
+
+    function closeEditDialog() {
+        $('#return_ff').form('clear');
+        $('#return_dlg_edit').dialog('close');
+    }
+
+    function remove(ids,callback) {
+        $.messager.progress({title:'正在删除,请稍后...'});	// display the progress bar
+        $.ajax({
+            url: '/books/delete',//TODO url
+            data: {ids: ids},
+            type: 'post',
+            dataType: 'json'
+        }).done(function (ret) {
+            if (ret && ret.flag) {
+                if($.isFunction(callback)){
+                    callback();
+                }
+                $.messager.alert('提示', '删除成功!');
+            } else {
+                $.messager.alert('提示', ret, msg || '删除失败!');
+            }
+        }).fail(function () {
+            $.messager.alert('提示', '删除失败!');
+        });
+    }
+    $.extend({
+        return:{
+            submitForm:submitForm,
+            closeEditDialog:closeEditDialog
+        }
+    });
+</script>

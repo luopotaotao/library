@@ -1,5 +1,10 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',menu:'#books_query_mm',searcher:doSearch" style="width:100%">
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',menu:'#books_query_mm',searcher:function (name, return_status) {
+        $('#books_query_dg').datagrid('load',{
+            name:encodeURIComponent(name),
+            return_status:return_status=='0'?'':return_status
+        });
+    }" style="width:100%">
 </div>
 <div id="books_query_mm">
     <div data-options="name:'',iconCls:'icon-ok'">全部</div>
@@ -8,28 +13,63 @@
     <div data-options="name:'inquiry'">入库</div>
 </div>
 <script>
-    function doSearch(name, return_status) {
-        $('#books_query_dg').datagrid('load',{
-            name:name,
-            return_status:return_status=='0'?'':return_status
-        });
-    }
+
 </script>
 <table id="books_query_dg" style="height: 97%;width: 99%"></table>
+<div id="books_query_dlg_edit" class="easyui-dialog" style="width:100%;max-width:800px;padding:30px 60px;" data-options="
+    title: '图书详情',
+    closed: true,
+    modal: true,
+    draggable: false
+    ">
+    <table id="books_query_dlg_dg" style="width: 99%;"></table>
+</div>
 <script type="text/javascript">
     $(function () {
+        $('#books_query_dlg_dg').datagrid({
+            url: '/books/list',
+            method: 'get',
+            iconCls: 'icon-save',
+            fitColumns: true,
+            singleSelect: true,
+            columns: [[
+                {field: 'id', title: 'ID', hidden: true},
+                {field: 'code', title: '图书编号'},
+                {field: 'name', title: '图书名称'},
+                {field: 'author', title: '作者'},
+                {field: 'publisher', title: '出版社'},
+                {field: 'date', title: '出版日期'},
+                {field: 'price', title: '价格'},
+                {field: 'status', title: '图书状态'},
+                {field: 'deadline', title: '应归还日期'}
+
+            ]],
+            onHeaderContextMenu: function (e, field) {
+                e.preventDefault();
+                if (!$.cmenu) {
+                    createColumnMenu();
+                }
+                $.cmenu.menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            }
+        });
         $('#books_query_dg').datagrid({
             url: '/books/list',
             method: 'get',
             iconCls: 'icon-save',
             fitColumns: true,
-            singleSelect: false,
+            singleSelect: true,
             pagination: true,
             pageSize: 10,
             columns: [[
                 {field: 'id', title: 'ID', hidden: true},
-                {field: 'code', title: '标号'},
-                {field: 'name', title: '名称'},
+                {field: 'code', title: '编号'},
+                {field: 'name', title: '名称',formatter: function(value,row,index){
+                    return "<a href='#' class='easyui-linkbutton' data-options='plain:false' onclick=\"$('#books_query_dlg_edit').dialog('open')\">"+value+"</a>"
+
+                }  	},
                 {field: 'author', title: '作者'},
                 {field: 'translator', title: '译者'},
                 {field: 'publisher', title: '出版社'},

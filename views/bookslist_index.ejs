@@ -1,5 +1,10 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',menu:'#books_manager_mm',searcher:doSearch" style="width:100%">
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',menu:'#books_manager_mm',searcher:function (name, return_status) {
+        $('#users_dg').datagrid('load',{
+            name:encodeURIComponent(name),
+            return_status:return_status=='0'?'':return_status
+        });
+    }" style="width:100%">
 </div>
 <div id="books_manager_mm">
     <div data-options="name:'',iconCls:'icon-ok'">全部</div>
@@ -7,14 +12,6 @@
     <div data-options="name:'damaged'">损坏/丢失</div>
     <div data-options="name:'inquiry'">入库</div>
 </div>
-<script>
-    function doSearch(name, return_status) {
-        $('#users_dg').datagrid('load',{
-            name:name,
-            return_status:return_status=='0'?'':return_status
-        });
-    }
-</script>
 <table id="books_manager_dg" style="height: 97%;width: 99%"></table>
 <div id="books_manager_dlg_edit" style="width:100%;max-width:400px;padding:30px 60px;" data-options="
 title: '添加图书',

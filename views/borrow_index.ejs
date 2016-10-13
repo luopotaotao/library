@@ -1,15 +1,9 @@
 
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',searcher:doSearch" style="width:100%">
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',searcher:function (name) {
+        $('#borrow_dg').datagrid('load',{name:encodeURIComponent(name)});
+    }" style="width:100%">
 </div>
-<script>
-    function doSearch(name) {
-
-        $('#borrow_dg').datagrid('load',{
-            name:name
-        });
-    }
-</script>
 <table id="borrow_dg" style="height: 97%;width: 99%"></table>
 <div id="borrow_dlg_cache" class="easyui-dialog" style="width:100%;max-width:800px;padding:30px 60px;" data-options="
     title: '借阅一览表',
