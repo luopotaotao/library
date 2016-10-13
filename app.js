@@ -33,13 +33,13 @@ app.use(cookieSession({
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/login', login);
-app.use(function (req,res,next) {
-  if(req.session.user){
-    next();
-  }else{
-    res.redirect("/login");
-  }
-})
+// app.use(function (req,res,next) {
+//   if(req.session.user){
+//     next();
+//   }else{
+//     res.redirect("/login");
+//   }
+// })
 app.use('/', routes);
 app.use('/booksQuery', booksQuery);
 

@@ -3,7 +3,7 @@
  */
 var Sequelize = require('sequelize');
 var seq = new Sequelize('library', 'root', 'honghe', {
-    host: '192.168.21.13',
+    host: '192.168.21.201',
     dialect: 'mysql',
     pool: {
         max: 5,

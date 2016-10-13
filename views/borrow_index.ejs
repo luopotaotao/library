@@ -1,13 +1,10 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',searcher:doSearch" style="width:100%">
-</div>
-<script>
-    function doSearch(name) {
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',searcher:function (name) {
         $('#borrow_dg').datagrid('load',{
-            name:name
+            name:encodeURIComponent(name)
         });
-    }
-</script>
+    }" style="width:100%">
+</div>
 <table id="borrow_dg" style="height: 97%;width: 99%"></table>
 <div id="borrow_dlg_edit" class="easyui-dialog" style="width:100%;max-width:800px;padding:30px 60px;" data-options="
     title: '查看借阅库',
@@ -33,7 +30,7 @@
                 <div style="margin-bottom:20px">
                     <input class="easyui-textbox select" name="code" style="width:100%"
                            data-options="label:'借阅人编号:',required:true,editable:false,buttonText:'选择',
-                   buttonIcon:'icon-search'" url="borrow_index_dialog.ejs">
+                   buttonIcon:'icon-search'" url="borrow_index_dialog.ejs" >
                 </div>
                 <div style="margin-bottom:20px">
                     <input class="easyui-textbox" name="name" style="width:100%"
@@ -81,7 +78,7 @@
                 title: '请选择',
                 closed: false,
                 cache: true,
-                href: '/books/list',
+                href: 'borrow_index_dialog.ejs',
                 modal: true,
                 buttons: [{
                     text: '确定',
@@ -226,11 +223,11 @@
 
         function showEditDialog(data) {
             if (data) {
-                $('#borrow_ff').form({url: '/books/update'});
-                $('#borrow_ff').form('load', data);
+                $('#borrow_dialog_ff').form({url: '/books/update'});
+                $('#borrow_dialog_ff').form('load', data);
                 $('#borrow_dlg_edit').dialog({url: 'edit'});
             } else {
-                $('#borrow_ff').form({url: '/books/add'});
+                $('#borrow_dialog_ff').form({url: '/books/add'});
                 $('#borrow_dlg_edit').dialog({url: 'add'});
             }
             $('#borrow_dlg_edit').dialog('open');
@@ -238,7 +235,7 @@
 
         function submitForm() {
             $.messager.progress({title:'数据保存中,请稍后...'});	// display the progress bar
-            $('#borrow_ff').form('submit', {
+            $('#borrow_dialog_ff').form('enableValidation').form('submit', {
                 onSubmit: function () {
                     var isValid = $(this).form('validate');
                     if (!isValid) {

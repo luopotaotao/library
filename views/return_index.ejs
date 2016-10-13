@@ -1,5 +1,9 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号或借阅人',searcher:doSearch" style="width:300px;">
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号或借阅人',searcher:function (name) {
+        $('#return_dg').datagrid('load',{
+            name:encodeURIComponent(name)
+        });
+    }" style="width:300px;">
     <a href="#" class="easyui-linkbutton" data-options="plain:false" onclick="$('#return_dlg_edit').dialog('open')">归还</a>
 </div>
 <script>
