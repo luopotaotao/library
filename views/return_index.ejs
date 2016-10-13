@@ -1,38 +1,87 @@
 <div style="width:60%">
     <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号或借阅人',searcher:doSearch" style="width:300px;">
-    <a href="#" class="easyui-linkbutton" data-options="plain:false" onclick="$('#return_dlg_edit').dialog('open')">归还</a>
+    <a href="#" class="easyui-linkbutton" data-options="plain:false"
+       onclick="$.ret.showReturnDialog()">归还</a>
 </div>
 <script>
     function doSearch(name) {
-        $('#users_dg').datagrid('load',{
-            name:name
+        $('#users_dg').datagrid('load', {
+            name: name
         });
     }
 </script>
 <table id="return_dg" style="height: 97%;width: 99%"></table>
-<div id="return_dlg_edit" class="easyui-dialog" style="width:100%;max-width:700px;padding:30px 60px;"
+<div id="return_dlg_confirm" class="easyui-dialog" style="width:100%;max-width:700px;"
      data-options="
-                    title: '图书信息',
+                    title: '还书信息',
                     closed: true,
                     modal: true,
                     draggable: false,
                     buttons: [{
                     text: '归还',
                     iconCls: 'icon-ok',
-                    handler: $.return.submitForm
+                    handler: $.ret.doReturn
                     }, {
                     text: '取消',
                     iconCls: 'icon-cancel',
-                    handler: $.return.closeEditDialog
+                    handler: $.ret.closeConfirmDialog
                     }]
                     ">
-    <table id="return_dialog_dg" style="width: 99%"></table>
+    <table id="return_dialog_dg" class="easyui-datagrid" style="width: 99%"
+           data-options="
+            fitColumns: true,
+            singleSelect: false,
+            pagination: false">
+        <thead>
+        <th data-options="field: 'ck', checkbox: true"></th>
+        <th data-options="field: 'id', title: 'ID', hidden: true"></th>
+        <th data-options="field: 'code', title: '图书编号'"></th>
+        <th data-options="field: 'name', title: '图书名称'"></th>
+        <th data-options="field: 'e_user_id', title: '借阅人'"></th>
+        <th data-options="field: 'borrow_date', title: '借阅日期', formatter: function (val, row) {
+        return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+        }"></th>
+        <th data-options="field: 'deadline', title: '应归还日期', formatter: function (val, row) {
+        return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+        }"></th>
+        <th data-options="field: 'return_date', title: '实际归还日期', formatter: function (val, row) {
+        return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+        }"></th>
+        <th data-options="field: 'delay', title: '逾期天数', formatter: function (val, row) {
+         return val>0?val:'';
+        }"></th>
+        <th data-options="field: 'status', title: '状态',width:80,formatter:function(value,row){
+							return {RETURNED:'归还',OVERDUE:'超期',MISSED:'损毁遗失'}[value]||null;
+						},
+						editor:{
+							type:'combobox',
+							options:{
+								valueField:'id',
+								textField:'text',
+								data:[
+								    {
+								        id:'RETURNED',
+								        text:'归还'
+								    },{
+								        id:'OVERDUE',
+								        text:'超期'
+								    },{
+								        id:'MISSED',
+								        text:'损毁遗失'
+								    }
+								],
+								required:true
+							}
+						}"></th>
+        <th data-options="field: 'null', title: '操作',formatter:function(){return '<a href=\'\'>'+'删除'+'</a>';}"></th>
+        </thead>
+    </table>
 </div>
 
 <script type="text/javascript">
     $(function () {
-        $('#return_dialog_dg').datagrid({
-            url: 'records/list',
+        $('#return_dg').datagrid({
+            url: '/return/list',
             method: 'get',
             iconCls: 'icon-save',
 //            width: 700,
@@ -41,179 +90,169 @@
             singleSelect: false,
             pagination: true,
             pageSize: 10,
-            toolbar: [{
-                text: '删除',
-                iconCls: 'icon-cancel',
-                handler: function () {
-                    var rows = $('#return_dialog_dg').datagrid('getChecked');
-                    if (!rows || !rows.length) {
-                        $.messager.alert('提示', '请选择要删除的行!');
-                        return;
-                    }
-                    $.messager.confirm('提示', '是否确定删除这' + rows.length + '条数据?', function (r) {
-                        if (r) {
-                            remove($.map(rows, function (i, row) {
-                                return row.id;
-                            }), function () {
-                                $('#return_dialog_dg').datagrid('reload');
-                            });
+            columns: [[
+                {field: 'ck', checkbox: true},
+                {field: 'id', title: 'ID', hidden: true},
+                {field: 'code', title: '图书编号'},
+                {field: 'name', title: '图书名称'},
+                {
+                    field: 'user', title: '借阅人', formatter: function (val, row) {
+                    return val?val.name: '';
+                }
+                },
+                {
+                    field: 'borrow_date', title: '借阅日期', formatter: function (val, row) {
+                    return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+                }
+                },
+                {
+                    field: 'deadline', title: '应归还日期', formatter: function (val, row) {
+                    return $.formatDate(val,'yyyy-MM-dd hh:mm')
+                }
+                },
+                {
+                    field: 'delay', title: '逾期天数',formatter:function (val,row) {
+                    return val>0?'<p style="color: red;">'+val+'</p>':'<p style="color: green;">'+(-val)+'</p>';
+                }
+                }
+            ]],
+            loadFilter: function(data){
+                if (data.rows){
+                    var a_day = 1000*60*60*24;
+                    var current = new Date();
+                    $.each(data.rows,function (i,row) {
+                        //计算应还日期
+                        if(row.borrow_date&&row.user&&row.user.period){
+                            var deadline = new Date((new Date(row.borrow_date))+a_day*row.user.period);
+                            row.deadline = deadline;
                         }
+                        //计算图书状态以及超期天数
+                        if(row.deadline<current){
+                            row.status = 'OVERDUE';
+                        }
+                        row.delay = Math.round((current-row.deadline)/a_day);
+
                     });
                 }
-            }],
-            columns: [[
-                {field: 'ck', checkbox: true},
-                {field: 'id', title: 'ID', hidden: true},
-                {field: 'code', title: '图书编号'},
-                {field: 'name', title: '图书名称'},
-                {field: 'e_user_id', title: '借阅人'},
-                {field: 'borrow_data', title: '借阅日期'},
-                {field: 'deadline', title: '应归还日期'},
-                {field: 'actual_return_days', title: '实际归还日期'},
-                {field: 'arrears', title: '逾期天数'},
-                {field: 'status', title: '状态'}
-            ]],
-            onHeaderContextMenu: function (e, field) {
-                e.preventDefault();
-                if (!$.cmenu) {
-                    createColumnMenu();
-                }
-                $.cmenu.menu('show', {
-                    left: e.pageX,
-                    top: e.pageY
-                });
+                return data;
             }
+
         });
-        $('#return_dg').datagrid({
-            url: 'books/list',
-            method: 'get',
-            iconCls: 'icon-save',
-//            width: 700,
-//            height: 250,
-            fitColumns: true,
-            singleSelect: false,
-            pagination: true,
-            pageSize: 10,
-            columns: [[
-                {field: 'ck', checkbox: true},
-                {field: 'id', title: 'ID', hidden: true},
-                {field: 'code', title: '图书编号'},
-                {field: 'name', title: '图书名称'},
-                {field: 'e_user_id', title: '借阅人'},
-                {field: 'borrow_data', title: '借阅日期'},
-                {field: 'deadline', title: '应归还日期'},
-                {field: 'arrears', title: '逾期天数'}
-            ]],
-            onHeaderContextMenu: function (e, field) {
-                e.preventDefault();
-                if (!$.cmenu) {
-                    createColumnMenu();
-                }
-                $.cmenu.menu('show', {
-                    left: e.pageX,
-                    top: e.pageY
-                });
-            }
-        });
-        function createColumnMenu() {
-            $.cmenu = $('<div/>').appendTo('body');
-            $.cmenu.menu({
-                onClick: function (item) {
-                    if (item.iconCls == 'icon-ok') {
-                        $('#return_dg').datagrid('hideColumn', item.name);
-                        $.cmenu.menu('setIcon', {
-                            target: item.target,
-                            iconCls: 'icon-empty'
-                        });
-                    } else {
-                        $('#return_dg').datagrid('showColumn', item.name);
-                        $.cmenu.menu('setIcon', {
-                            target: item.target,
-                            iconCls: 'icon-ok'
-                        });
-                    }
-                }
+
+        function doReturn() {
+            $.messager.progress({title: '数据保存中,请稍后...'});
+            var rows = $('#return_dialog_dg').datagrid('getRows');
+            var return_set = {};
+            $.each(rows,function (i,row) {
+                return_set[row.id] = row['status'];
             });
-            var fields = $('#return_dg').datagrid('getColumnFields');
-            for (var i = 0; i < fields.length; i++) {
-                var field = fields[i];
-                var col = $('#return_dg').datagrid('getColumnOption', field);
-                $.cmenu.menu('appendItem', {
-                    text: col.title,
-                    name: field,
-                    iconCls: 'icon-ok'
-                });
-            }
-        }
-
-        function showEditDialog(data) {
-            if (data) {
-                $('#return_ff').form({url: '/books/update'});
-                $('#return_ff').form('load', data);
-                $('#return_dlg_edit').dialog({url: 'edit'});
-            } else {
-                $('#return_ff').form({url: '/books/add'});
-                $('#return_dlg_edit').dialog({url: 'add'});
-            }
-            $('#return_dlg_edit').dialog('open');
-        }
-        function submitForm() {
-            $.messager.progress({title:'数据保存中,请稍后...'});	// display the progress bar
-            $('#return_dialog_dg_ff').form('submit', {
-                onSubmit: function () {
-                    var isValid = $(this).form('validate');
-                    if (!isValid) {
-                        $.messager.progress('close');	// hide progress bar while the form is invalid
-                    }
-                    return isValid;	// return false will stop the form submission
-                },
-                success: function (data) {
-                    data = $.parseJSON(data);
-                    $.messager.progress('close');	// hide progress bar while submit successfully
-
-                    if (data.flag) {
-                        $.messager.alert('提示', '保存成功!');
-                        $('#return_dialog_dg_ff').datagrid('reload');
-                        closeEditDialog();
-                    } else {
-                        $.messager.alert('提示', data.message || '保存失败,请检查网络连接或者权限!');
-                    }
-                }
-            });
-        }
-
-        function closeEditDialog() {
-            $('#return_ff').form('clear');
-            $('#return_dlg_edit').dialog('close');
-        }
-
-        function remove(ids,callback) {
             $.ajax({
-                url: '/books/delete',//TODO url
-                data: {ids: ids},
+                url: '/return/return',
+                data: return_set,
                 type: 'post',
-                dataType: 'json'
+                dataType: 'json',
+                data:return_set
             }).done(function (ret) {
                 if (ret && ret.flag) {
-                    if($.isFunction(callback)){
-                        callback();
-                    }
-                    $.messager.alert('提示', '删除成功!');
+                    $.messager.alert('提示', '归还成功!');
+                    $('#return_dg').datagrid('reload');
+                    closeConfirmDialog();
                 } else {
-                    $.messager.alert('提示', ret, msg || '删除失败!');
+                    $.messager.alert('提示', ret, msg || '归还失败!');
                 }
             }).fail(function () {
-                $.messager.alert('提示', '删除失败!');
+                $.messager.alert('提示', '归还失败!');
             }).always(function () {
                 $.messager.progress('close');
             });
         }
+
+        function closeConfirmDialog() {
+            $('#return_dlg_confirm').dialog('close');
+        }
+
+        function showReturnDialog() {
+            var rows = $('#return_dg').datagrid('getChecked');
+
+            if(rows&&rows.length){
+                var $dlg = $('#return_dlg_confirm');
+                $dlg.dialog('open');
+                var date = new Date();
+                $.each(rows,function (i,row) {
+                    if(row.status!='OVERDUE'){
+                        row.status = 'RETURNED';
+                    }
+                    row.return_date = date;
+                });
+                $dlg.find('#return_dialog_dg').datagrid('loadData',{rows:rows});
+
+            }else{
+                $.messager.alert('提示','请勾选要归还的图书');
+            }
+        }
+
         $.extend({
-            return:{
-                submitForm:submitForm,
-                closeEditDialog:closeEditDialog
+            ret: {
+                doReturn: doReturn,
+                closeConfirmDialog: closeConfirmDialog,
+                showReturnDialog:showReturnDialog
             }
         });
+
+        $.extend($.fn.datagrid.methods, {
+            editCell: function(jq,param){
+                return jq.each(function(){
+                    var opts = $(this).datagrid('options');
+                    var fields = $(this).datagrid('getColumnFields',true).concat($(this).datagrid('getColumnFields'));
+                    for(var i=0; i<fields.length; i++){
+                        var col = $(this).datagrid('getColumnOption', fields[i]);
+                        col.editor1 = col.editor;
+                        if (fields[i] != param.field){
+                            col.editor = null;
+                        }
+                    }
+                    $(this).datagrid('beginEdit', param.index);
+                    var ed = $(this).datagrid('getEditor', param);
+                    if (ed){
+                        if ($(ed.target).hasClass('textbox-f')){
+                            $(ed.target).textbox('textbox').focus();
+                        } else {
+                            $(ed.target).focus();
+                        }
+                    }
+                    for(var i=0; i<fields.length; i++){
+                        var col = $(this).datagrid('getColumnOption', fields[i]);
+                        col.editor = col.editor1;
+                    }
+                });
+            },
+            enableCellEditing: function(jq){
+                return jq.each(function(){
+                    var dg = $(this);
+                    var opts = dg.datagrid('options');
+                    opts.oldOnClickCell = opts.onClickCell;
+                    opts.onClickCell = function(index, field){
+                        if (opts.editIndex != undefined){
+                            if (dg.datagrid('validateRow', opts.editIndex)){
+                                dg.datagrid('endEdit', opts.editIndex);
+                                opts.editIndex = undefined;
+                            } else {
+                                return;
+                            }
+                        }
+                        dg.datagrid('selectRow', index).datagrid('editCell', {
+                            index: index,
+                            field: field
+                        });
+                        opts.editIndex = index;
+                        opts.oldOnClickCell.call(this, index, field);
+                    }
+                });
+            }
+        });
+
+        $('#return_dialog_dg').datagrid().datagrid('enableCellEditing');
     });
 
 </script>
+

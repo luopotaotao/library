@@ -34,7 +34,6 @@
                 {field: 'translator', title: '译者'},
                 {field: 'publisher', title: '出版社'},
                 {field: 'date', title: '出版日期',formatter:function (val,row) {
-                    debugger;
                     return val?$.formatDate(new Date(val),'yyyy-MM-dd'):null;
                 }},
                 {field: 'price', title: '价格'},

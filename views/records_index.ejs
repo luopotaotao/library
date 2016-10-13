@@ -78,7 +78,6 @@
             loadFilter: function (data) {
                 if (data && data.rows) {
                     function resetDateFields(obj) {
-                        debugger;
                         if ($.isPlainObject(obj)) {
                             $.each(['borrow_date', 'deadline', 'return_date'], function (i,field) {
                                 if (obj[field]) {
@@ -92,7 +91,6 @@
                     $.each(data.rows, function (i,val) {
                         resetDateFields(val);
                     });
-                    debugger;
                     return data;
                 } else {
                     return data;

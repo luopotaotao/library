@@ -57,8 +57,8 @@
         </div>
         <div style="margin-bottom:20px">
             <select class="easyui-combobox" name="status" label="状态" style="width:100%">
-                <option value="IN">在库</option>
-                <option value="OUT">借出</option>
+                <option value="RETURNED">在库</option>
+                <option value="BORROWED">借出</option>
                 <option value="MISSED">损毁遗失</option>
             </select>
         </div>
@@ -125,13 +125,12 @@
                 {field: 'translator', title: '译者'},
                 {field: 'publisher', title: '出版社'},
                 {field: 'date', title: '出版日期',formatter:function (val,row) {
-                    debugger;
                     return val?$.formatDate(new Date(val),'yyyy-MM-dd'):null;
                 }},
                 {field: 'price', title: '价格'},
                 {
                     field: 'status', title: '状态', formatter: function (val, row) {
-                    return {IN: '在库', OUT: '借出', MISSED: '损毁遗失'}[val];
+                    return {RETURNED: '在库', BORROWED: '借出', MISSED: '损毁遗失'}[val];
                 }
                 }
             ]],
@@ -181,7 +180,6 @@
         function showEditDialog(data) {
             var $form = $('#books_ff');
             if (data) {
-                debugger;
                 $form.form({url: '/books/update'});
                 $form.form('load', data);
                 $('#books_dlg_edit').dialog({title: '编辑图书'});

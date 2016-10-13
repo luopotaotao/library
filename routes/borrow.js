@@ -3,7 +3,8 @@
  */
 var express = require('express');
 var util = require('util');
-var borrowService = require('../service/BorrowService')
+var borrowService = require('../service/BorrowService');
+var bookService = require('../service/BookService')
 var router = express.Router();
 
 
@@ -15,19 +16,43 @@ router
         res.render('borrow_select_user');
     })
     .post('/action', function (req, res, next) {
-        var user_id = 1,//req.body.user_id,
-            period = 30,//req.body.period,
-            book_ids = [1,2]//req.body.book_ids;
+        var user_id =req.body.user_id,
+            period = req.body.period,
+            book_ids = req.body.book_ids;
         if (!user_id || !util.isArray(book_ids) || book_ids.length < 1) {
             res.json({flag: false, msg: 'invalid user_id or book_ids'});
         }
-        borrowService.borrow(user_id, period||30,book_ids, function (result) {
+        bookService.markBorrowed(book_ids,user_id,function (result) {
             if (result.length > 0) {
                 res.json({
                     flag: true,
                     msg: 'success'
                 });
             }
+        },function () {
+            res.json({
+                flag: false,
+                msg: 'error'
+            })
+        })
+    })
+    .post('/return',function (req,res,next) {
+        var return_set = {};
+        req.body.return_set.forEach(function (item) {
+            return_set[item.id]= item.status;
+        });
+        bookService.markReturned(return_set,function (result) {
+            if (result.length > 0) {
+                res.json({
+                    flag: true,
+                    msg: 'success'
+                });
+            }
+        },function () {
+            res.json({
+                flag: false,
+                msg: 'error'
+            })
         });
     })
     .get('/record',function (req,res,next) {

@@ -11,6 +11,7 @@ var Record = db.Record;
 var User = db.User;
 var Book = db.Book;
 var RECORD_STATUS = db.CONST_RECORD_STATUS;
+
 function borrow(user_id, period, book_ids, callback) {
     if (!user_id || !util.isArray(book_ids) || book_ids.length < 1) {
         callback();
@@ -36,6 +37,12 @@ function borrow(user_id, period, book_ids, callback) {
         });
 
 }
+/**
+ * 查询借阅记录
+ * @param username 用户名
+ * @param bookname 图书名
+ * @param callback
+ */
 function query(username, bookname, callback) {
     var user_where = {deleted: false},
         book_where = {deleted: false};
@@ -51,8 +58,8 @@ function query(username, bookname, callback) {
         }
     }
     if (bookname) {
-        var bookname_like = ['%', username, '%'].join('');
-        user_where.$or = {
+        var bookname_like = ['%', bookname, '%'].join('');
+        book_where.$or = {
             name: {
                 $like: bookname_like
             },
@@ -61,8 +68,8 @@ function query(username, bookname, callback) {
             }
         }
     }
-    user_where.id = Seq.col('record.bookId');
-    book_where.id = Seq.col('record.userId');
+    user_where.id = Seq.col('record.userId');
+    book_where.id = Seq.col('record.bookId');
     Record.findAndCountAll({
         include: [{
             model: User,
@@ -77,6 +84,39 @@ function query(username, bookname, callback) {
         callback(result);
     });
 }
+
+function list(name,callback) {
+    var user_where = {deleted: false},
+        book_where = {deleted: false};
+    if (name) {
+        var bookname_like = ['%', name, '%'].join('');
+        book_where.$or = {
+            name: {
+                $like: bookname_like
+            },
+            code: {
+                $like: bookname_like
+            }
+        }
+    }
+    book_where.id = Seq.col('record.bookId');
+    Record.findAndCountAll({
+        include: [{
+            model: User,
+            where: user_where,
+            required: false
+        }, {
+            model: Book,
+            where: book_where,
+            required: false
+        }]
+    }).then(function (result) {
+        result.total = result.count;
+        delete result.count;
+        callback(result);
+    });
+}
+
 /**
  *
  * @param return_list 归还信息列表,每个记录需要包含record_id,return_status
@@ -109,7 +149,7 @@ function return_(return_list, callback) {
 // query('12', null, function (result) {
 //     console.log(JSON.stringify(result));
 // });
-// return_([{record_id:1,return_status:RECORD_STATUS.RETURNED}],function (result) {
+// return_([{record_id:1,return_status:BOOK_STATUS.RETURNED}],function (result) {
 //     console.log(JSON.stringify(result.length));
 // });
 // borrow(1,30,[1,2],function (result) {
