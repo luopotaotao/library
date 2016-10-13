@@ -88,7 +88,6 @@
             }
         });
         function selectUser(callback) {
-            var $doc = $(document);
             var height = screen.availHeight*0.5, width = screen.availWidth*0.3;
             var $div = $('<div/>',{height:height,width:width});
             $div.dialog({
@@ -162,16 +161,6 @@
                     showCacheDialog();
                 }
             }],
-            columns: [[
-                {field: 'ck', checkbox: true},
-                {field: 'id', title: 'ID', hidden: true},
-                {field: 'code', title: '图书编号'},
-                {field: 'name', title: '图书名称'},
-                {field: 'borrow_date', title: '借阅日期'},
-                {field: 'deadline', title: '应归还日期'},
-                {field: 'e_user_id', title: '借阅人'}
-
-            ]],
             columns: [[
                 {field: 'ck', checkbox: true},
                 {field: 'id', title: 'ID', hidden: true},
