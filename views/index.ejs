@@ -14,7 +14,6 @@
 <body class="easyui-layout">
 <div data-options="region:'north',border:false" style="height:60px;background:#B3DFDA;padding:10px">鸿合图书管理系统
     <p><%=user.name%><a href="/login/logout">退出登录</a></p>
-
 </div>
 <div data-options="region:'west',split:true,title:'菜单'" style="width:150px;padding:10px;">
     <ul id="main_tree_menu" class="easyui-tree"></ul>
@@ -22,10 +21,14 @@
 <div data-options="region:'east',split:true,collapsed:true,title:'East'" style="width:100px;padding:10px;">east region
 </div>
 <div data-options="region:'south',border:false" style="height:50px;background:#A9FACD;padding:10px;">south region</div>
-<div id="main_layout_center" class="easyui-tabs" data-options="region:'center'" style="padding: 0px;">
+<div id="main_layout_center" class="easyui-tabs" data-options="region:'center',onSelect:function(title,index){
+    $(this).find('.tabs-panels').children().eq(index).find('.datagrid-f').datagrid('reload');
+}" style="padding: 0px;">
 </div>
 <script>
     $(function () {
+        $.ajaxSetup({cache:false});
+
         var tree_data = [{
             "id": 1,
             "text": "图书信息",
@@ -80,6 +83,7 @@
             }
 
         }
+
     });
 </script>
 </body>

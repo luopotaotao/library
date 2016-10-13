@@ -47,7 +47,7 @@ function query(username, bookname, callback) {
     var user_where = {deleted: false},
         book_where = {deleted: false};
     if (username) {
-        var username_like = ['%', username, '%'].join('');
+        var username_like = ['%', decodeURIComponent(username), '%'].join('');
         user_where.$or = {
             name: {
                 $like: username_like
@@ -58,7 +58,7 @@ function query(username, bookname, callback) {
         }
     }
     if (bookname) {
-        var bookname_like = ['%', bookname, '%'].join('');
+        var bookname_like = ['%', decodeURIComponent(bookname), '%'].join('');
         book_where.$or = {
             name: {
                 $like: bookname_like
@@ -89,7 +89,7 @@ function list(name,callback) {
     var user_where = {deleted: false},
         book_where = {deleted: false};
     if (name) {
-        var bookname_like = ['%', name, '%'].join('');
+        var bookname_like = ['%', decodeURIComponent(name), '%'].join('');
         book_where.$or = {
             name: {
                 $like: bookname_like
