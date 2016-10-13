@@ -2,6 +2,19 @@
  * Created by taotao on 2016/10/12.
  */
 function format(date, template) {
+    if(!date){
+        return null;
+    }
+    if(!(date instanceof Date)){
+        try{
+            date = new Date(date);
+        }catch(e) {
+            return null;
+        }
+    }
+    if(!date){
+        return null;
+    }
     var o =
     {
         "M+": date.getMonth() + 1, //month

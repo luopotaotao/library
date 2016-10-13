@@ -28,7 +28,8 @@ var Book = seq.define('book', {
     publisher: Seq.STRING,
     date: Seq.DATE,
     price: Seq.DECIMAL(18, 2),
-    status: Seq.ENUM('IN', 'OUT', 'MISSED'),
+    status: Seq.ENUM('BORROWED', 'RETURNED', 'MISSED', 'OVERDUE'),
+    borrow_date: Seq.DATE,
     deleted: {type: Seq.BOOLEAN, defaultValue: false}
 });
 var Record = seq.define('record', {
@@ -44,21 +45,17 @@ User.hasMany(Record);
 Record.belongsTo(User);
 Book.hasMany(Record);
 Record.belongsTo(Book);
-
+Book.belongsTo(User);
 const CONST_USER_ROLE = {
         SUPER: 'SUPER',
         ADMIN: 'ADMIN',
         CUSTOM: 'CUSTOM'
     },
     CONST_BOOK_STATUS = {
-        IN: 'IN',
-        OUT: 'OUT',
-        MISSED: 'MISSED'
-    },
-    CONST_RECORD_STATUS = {
         BORROWED: 'BORROWED',
         RETURNED: 'RETURNED',
         MISSED: 'MISSED',
+        OVERDUE:'OVERDUE'
     }
 
 module.exports = {
@@ -69,5 +66,4 @@ module.exports = {
     Seq: Seq,
     CONST_USER_ROLE:CONST_USER_ROLE,
     CONST_BOOK_STATUS:CONST_BOOK_STATUS,
-    CONST_RECORD_STATUS:CONST_RECORD_STATUS
 }

@@ -1,57 +1,18 @@
 <div style="width:60%">
-    图书名称<input data-options="prompt:'请输入图书名称或图书编号或借阅状态',searcher:function (name) {
-        $('#records_dg').datagrid('load',{
-            name:encodeURIComponent(name)
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',searcher:doSearch" style="width:100%">
+</div>
+<script>
+    function doSearch(name) {
+        $('#users_dg').datagrid('load', {
+            name: name
         });
-    }" style="width:100%">
-</div>
+    }
+</script>
 <table id="records_dg" style="height: 97%;width: 99%"></table>
-<div id="records_dlg_edit" style="width:100%;max-width:400px;padding:30px 60px;" data-options="
-title: '添加图书',
-closed: true,
-modal: true,
-draggable: false,
-iconCls: 'icon-add',
-buttons: [{
-text: '保存',
-iconCls: 'icon-ok',
-handler: $.records.submitForm
-}, {
-text: '取消',
-iconCls: 'icon-cancel',
-handler: $.records.closeEditDialog
-}]
-">
-    <form id="records_ff" class="easyui-form" method="post" data-options="novalidate:true">
-        <div style="margin-bottom:20px;display: none">
-            <input class="easyui-textbox" name="id" style="width:100%" data-options="label:'图书记录id:',required:true">
-        </div>
-        <div style="margin-bottom:20px">
-            <input class="easyui-textbox" name="code" style="width:100%"
-                   data-options="label:'图书编号:',required:true">
-        </div>
-        <div style="margin-bottom:20px">
-            <input class="easyui-textbox" name="name" style="width:100%"
-                   data-options="label:'图书名称:',required:true">
-        </div>
-        <div style="margin-bottom:20px">
-            <input class="easyui-textbox" name="author" style="width:100%"
-                   data-options="label:'作者:',required:true">
-        </div>
-        <div style="margin-bottom:20px">
-            <input class="easyui-textbox" name="status" style="width:100%"
-                   data-options="label:'图书状态:',required:true">
-        </div>
-        <div style="margin-bottom:20px">
-            <input class="easyui-textbox" name="date" style="width:100%"
-                   data-options="label:'应归还日期:',required:true">
-        </div>
-    </form>
-</div>
 <script type="text/javascript">
     $(function () {
         $('#records_dg').datagrid({
-            url: '/books/list',
+            url: '/records/list',
             method: 'get',
             iconCls: 'icon-save',
             fitColumns: true,
@@ -61,11 +22,47 @@ handler: $.records.closeEditDialog
             columns: [[
                 {field: 'ck', checkbox: true},
                 {field: 'id', title: 'ID', hidden: true},
-                {field: 'code', title: '图书编号'},
-                {field: 'name', title: '图书名称'},
-                {field: 'author', title: '作者'},
-                {field: 'status', title: '图书状态'},
-                {field: 'date', title: '应归还日期'}
+                {
+                    field: 'book.code', title: '图书编号', formatter: function (val, row) {
+                    return row.book ? row.book.code : '';
+                }
+                },
+                {
+                    field: 'book.name', title: '图书名称', formatter: function (val, row) {
+                    return row.book ? row.book.name : '';
+                }
+                },
+                {
+                    field: 'user.name', title: '借阅人', formatter: function (val, row) {
+                    return row.user ? row.user.name : '';
+                }
+                },
+                {
+                    field: 'borrow_date', title: '借阅日期', formatter: function (val, row) {
+                        return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+                    }
+                },
+                {
+                    field: 'deadline', title: '应归还日期', formatter: function (val, row) {
+                        return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+                    }
+                },
+                {
+                    field: 'return_date', title: '实际归还日期', formatter: function (val, row) {
+                        return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+                    }
+                },
+                {
+                    field: 'delay', title: '逾期天数', formatter: function (val, row) {
+                    if (row.deadline && row.return_date) {
+                        var deadline = row.deadline;
+                        var return_date = row.return_date;
+                        if (deadline < return_date) {
+                            return (return_date.getTime() - deadline.getTime()) / (1000 * 60 * 60 * 24)
+                        }
+                    }
+                }
+                }
 
             ]],
             onHeaderContextMenu: function (e, field) {
@@ -77,6 +74,27 @@ handler: $.records.closeEditDialog
                     left: e.pageX,
                     top: e.pageY
                 });
+            },
+            loadFilter: function (data) {
+                if (data && data.rows) {
+                    function resetDateFields(obj) {
+                        if ($.isPlainObject(obj)) {
+                            $.each(['borrow_date', 'deadline', 'return_date'], function (i,field) {
+                                if (obj[field]) {
+                                    obj[field] = new Date(obj[field]);
+                                }
+                            });
+                        }
+
+                    }
+
+                    $.each(data.rows, function (i,val) {
+                        resetDateFields(val);
+                    });
+                    return data;
+                } else {
+                    return data;
+                }
             }
         });
         function createColumnMenu() {
@@ -109,76 +127,6 @@ handler: $.records.closeEditDialog
                 });
             }
         }
-
-
-        function showEditDialog(data) {
-            if (data) {
-                $('#records_ff').form({url: '/books/update'});
-                $('#records_ff').form('load', data);
-                $('#records_dlg_edit').dialog({url: 'edit'});
-            } else {
-                $('#records_ff').form({url: '/books/add'});
-                $('#records_dlg_edit').dialog({url: 'add'});
-            }
-            $('#records_dlg_edit').dialog('open');
-        }
-
-        function submitForm() {
-            $.messager.progress({title:'数据保存中,请稍后...'});	// display the progress bar
-            $('#records_ff').form('submit', {
-                onSubmit: function () {
-                    var isValid = $(this).form('validate');
-                    if (!isValid) {
-                        $.messager.progress('close');	// hide progress bar while the form is invalid
-                    }
-                    return isValid;	// return false will stop the form submission
-                },
-                success: function (data) {
-                    data = $.parseJSON(data);
-                    $.messager.progress('close');	// hide progress bar while submit successfully
-                    if (data.flag) {
-                        $.messager.alert('提示', '保存成功!');
-                        $('#records_ff').datagrid('reload');
-                        closeEditDialog();
-                    } else {
-                        $.messager.alert('提示', data.message || '保存失败,请检查网络连接或者权限!');
-                    }
-                }
-            });
-        }
-
-        function closeEditDialog() {
-            $('#records_ff').form('clear');
-            $('#records_dlg_edit').dialog('close');
-        }
-
-        function remove(ids,callback) {
-            $.ajax({
-                url: '/books/delete',//TODO url
-                data: {ids: ids},
-                type: 'post',
-                dataType: 'json'
-            }).done(function (ret) {
-                if (ret && ret.flag) {
-                    if($.isFunction(callback)){
-                        callback();
-                    }
-                    $.messager.alert('提示', '删除成功!');
-                } else {
-                    $.messager.alert('提示', ret, msg || '删除失败!');
-                }
-            }).fail(function () {
-                $.messager.alert('提示', '删除失败!');
-            }).always(function () {
-                $.messager.progress('close');
-            });
-        }
-        $.extend({
-            records:{
-                submitForm:submitForm,
-                closeEditDialog:closeEditDialog
-            }
-        });
     });
 
 </script>
