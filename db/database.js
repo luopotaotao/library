@@ -2,8 +2,8 @@
  * Created by taotao on 2016/10/8.
  */
 var Sequelize = require('sequelize');
-var seq = new Sequelize('library', 'root', 'honghe', {
-    host: '192.168.21.201',
+var seq = new Sequelize('library', 'root', 'admin', {
+    host: '127.0.0.1',
     dialect: 'mysql',
     pool: {
         max: 5,

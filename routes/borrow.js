@@ -11,13 +11,17 @@ router
     .get('/index', function (req, res, next) {
         res.render('borrow_index');
     })
+    .get('/select_user', function (req, res, next) {
+        res.render('borrow_select_user');
+    })
     .post('/action', function (req, res, next) {
-        var user_id = req.body.user_id,
-            book_ids = req.body.book_ids;
+        var user_id = 1,//req.body.user_id,
+            period = 30,//req.body.period,
+            book_ids = [1,2]//req.body.book_ids;
         if (!user_id || !util.isArray(book_ids) || book_ids.length < 1) {
             res.json({flag: false, msg: 'invalid user_id or book_ids'});
         }
-        borrowService.borrow(user_id, book_ids, function (result) {
+        borrowService.borrow(user_id, period||30,book_ids, function (result) {
             if (result.length > 0) {
                 res.json({
                     flag: true,
@@ -25,6 +29,9 @@ router
                 });
             }
         });
+    })
+    .get('/record',function (req,res,next) {
+        res.render('records_index');
     })
     .get('/list', function (req, res, next) {
         var username = req.query.username,
