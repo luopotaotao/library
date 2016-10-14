@@ -4,8 +4,9 @@
 "use strict"
 var xlsx = require('node-xlsx');
 var fs = require('fs');
+var util = require("util");
 
-var fields = {
+var book_fields = {
     '书名': 'name',
     '图书编号': 'code',
     '作者': 'author',
@@ -14,14 +15,36 @@ var fields = {
     '出版日期': 'date',
     '价格': 'price'
 }
+var user_fields = {
+    '工号':'code',
+    '姓名':'name',
+    '性别':'gender',
+    '出生日期':'birth',
+    '借阅周期':'period',
+    '角色':'role',
+    '电话':'phone',
+    '邮箱':'email',
+    '密码':'password'
+}
 
-
+var date_fields = ['date','birth']
+/**
+ * Excel日期从为从1900,0,0起的天数值,将其转换为js时间
+ * @param date
+ */
+const a_day = 1000*60*60*24;
+const zero_date = new Date(1900,0,0);
+function parseDate(date) {
+    return util.isNumber(date)?new Date(a_day * (date - 1) + zero_date.getTime()):null;
+}
 /**
  * 解析excel数据
  * @param filePath 可以为文件路径,或者是buffer
  * @param fields 要解析的列名与数据库中对应的字段
  * @returns {*} 解析成功返回解析的list数组,否则返回失败信息
  */
+
+
 function parseXlsx(filePath, fields) {
     var excel = xlsx.parse(filePath);
     if (excel && excel.length && excel[0] && excel[0]['data']) {  //只解析Xlsx文件的第一个sheet
@@ -41,10 +64,17 @@ function parseXlsx(filePath, fields) {
         var data = excel[0]['data'];
         data.shift();//剔除标题行,只保留数据
         if (data && data.length) {
+
             data.forEach(function (row) {
                 var obj = {};
                 Object.keys(field_index).forEach(function (key) {
-                    obj[key] = row[field_index[key]]
+                    var val = row[field_index[key]];
+                    if(key==='gender'){
+                        obj[key] = {'男':'M','女':'F'}[val];
+                    }else{
+                        obj[key] = date_fields.indexOf(key)>-1?parseDate(val):val;
+                    }
+
                 });
                 list.push(obj);
             });
@@ -58,6 +88,7 @@ function parseXlsx(filePath, fields) {
     }
 }
 
+
 /**
  * 将给定的数据生成Excel的Buffer
  * @param sheetName sheet页的名称
@@ -69,7 +100,10 @@ function generateXlsx(sheetName,data) {
 }
 module.exports = {
     parseBookList: function (excelStream) {
-        return parseXlsx(excelStream, fields);
+        return parseXlsx(excelStream, book_fields);
+    },
+    parseUseList:function (excelStream) {
+        return parseXlsx(excelStream,user_fields);
     },
     generateXlsx:generateXlsx
 }

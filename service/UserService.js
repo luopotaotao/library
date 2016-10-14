@@ -8,7 +8,9 @@ var User = require('../db/libraryModels').User;
 function add(user, callback, errorHandler) {
     User.create(user).then(callback).catch(errorHandler);
 }
-
+function bulkAdd(users,callback,errorHandler) {
+    User.bulkCreate(users, { validate: true}).then(callback).catch(errorHandler);
+}
 /**
  *
  * @param user 可以为id数组[1,2...],或者单个id 1,2,..或者带有id属性的对象{id:1}
@@ -89,6 +91,30 @@ function query(params, callback) {
     });
 
 }
+function queryAll(params, callback) {
+    if (!util.isObject(params)) {
+        callback();
+        return;
+    }
+    var where = {deleted: false};
+    if (params.name) {
+        where.name = {$like: ['%', decodeURIComponent(params.name), '%'].join('')};
+    }
+    if (params.code) {
+        where.code = {$like: ['%', params.code, '%'].join('')};
+    }
+    if (params.role) {
+        where.role = params.role;
+    }
+    User.findAndCountAll({
+        where: where
+    }).then(function (result) {
+        result.total = result.count;
+        delete result.count;
+        callback(result);
+    });
+
+}
 
 function findByUsernamePassword(username, password, callback) {
     User.findOne({
@@ -110,9 +136,11 @@ function getNewInstance(callback) {
 
 module.exports = {
     add: add,
+    bulkAdd:bulkAdd,
     remove: remove,
     update: update,
     query: query,
+    queryAll:queryAll,
     findById: findById,
     findByUsernamePassword: findByUsernamePassword,
     getNewInstance: getNewInstance

@@ -15,6 +15,9 @@ var dateFormatter = require('../utils/DateFormater');
 function add(book, callback, errorHandler) {
     Book.create(book).then(callback).catch(errorHandler);
 }
+function bulkAdd(books,callback,errorHandler) {
+    Book.bulkCreate(books, { validate: true }).then(callback).catch(errorHandler);
+}
 /**
  * 删除书籍信息
  *@param book 可以为id数组[1,2...],或者单个id 1,2,..或者带有id属性的对象{id:1}
@@ -90,7 +93,6 @@ function query(params, callback) {
         rows = params.hasOwnProperty('rows') ? parseInt(params.rows) : 10,
         where = {deleted: false};
     if (params.name) {
-
         where.name = {$like: ['%', decodeURIComponent(params.name), '%'].join('')};
     }
     if (params.code) {
@@ -113,6 +115,34 @@ function query(params, callback) {
         callback(result);
     });
 }
+function queryAll(params, callback) {
+    if (!util.isObject(params)) {
+        callback();
+        return;
+    }
+    var where = {deleted: false};
+    if (params.name) {
+        where.name = {$like: ['%', decodeURIComponent(params.name), '%'].join('')};
+    }
+    if (params.code) {
+        where.code = {$like: ['%', params.code, '%'].join('')};
+    }
+    if (params.status) {
+        where.status = {$in: params.status};
+    }
+    Book.findAndCountAll({
+        include:[{
+            model:User
+        }],
+        where: where,
+        order: 'name asc',
+    }).then(function (result) {
+        result.total = result.count;
+        delete result.count;
+        callback(result);
+    });
+}
+
 
 /**
  * 根据id查询书籍信息
@@ -236,11 +266,15 @@ function markReturned(return_set, callback,errHandler) {
             .catch(errHandler);
     });
 }
+
+
 module.exports = {
     add: add,
+    bulkAdd:bulkAdd,
     remove: remove,
     update: update,
     query: query,
+    queryAll:queryAll,
     findById: findById,
     queryByIds: queryByIds,
     markBorrowed:markBorrowed,

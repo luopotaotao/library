@@ -1,9 +1,14 @@
 /**
  * Created by taotao on 2016/10/10.
  */
-function setXlsxResponseHeaders(res) {
+function setXlsxResponseHeaders(res,filename) {
     res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.set('Content-Disposition','attachment;filename=logo.xlsx');
+
+    try {
+        res.set('Content-Disposition', 'attachment;filename=' + filename);
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 module.exports = {

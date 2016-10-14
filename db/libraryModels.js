@@ -10,14 +10,14 @@ var User = seq.define('user', {
     name: Seq.STRING,
     gender: Seq.ENUM('M', 'F'),//0女,1男
     birth: Seq.DATE,
-    period: Seq.INTEGER,
-    role: Seq.ENUM('SUPER', 'ADMIN', 'CUSTOM'),//0管理员,1普通用户
+    period: {type:Seq.INTEGER,defaultValue:30},
+    role: {type:Seq.ENUM('SUPER', 'ADMIN', 'CUSTOM'),defaultValue:'CUSTOM'},//0管理员,1普通用户
     company: Seq.ENUM('company1', 'company2'),
     cost_center: Seq.STRING,
     id_code: Seq.STRING,
     phone: Seq.STRING,
     email: Seq.STRING,
-    password: Seq.STRING,
+    password: {type:Seq.STRING,defaultValue:'111111'},
     deleted: {type: Seq.BOOLEAN, defaultValue: false}
 });
 var Book = seq.define('book', {
@@ -28,7 +28,7 @@ var Book = seq.define('book', {
     publisher: Seq.STRING,
     date: Seq.DATE,
     price: Seq.DECIMAL(18, 2),
-    status: Seq.ENUM('BORROWED', 'RETURNED', 'MISSED', 'OVERDUE'),
+    status: {type:Seq.ENUM('BORROWED', 'RETURNED', 'MISSED', 'OVERDUE'),defaultValue:'RETURNED'},
     borrow_date: Seq.DATE,
     deleted: {type: Seq.BOOLEAN, defaultValue: false}
 });

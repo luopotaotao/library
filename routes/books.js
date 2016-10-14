@@ -4,38 +4,74 @@ var router = express.Router();
 var bookService = require('../service/BookService');
 
 var multer = require('multer');
-var upload = multer({dest: 'upload/'}).single('avatar');
+var upload = multer({dest: 'upload/'}).single('file');
 var fs = require('fs');
 var responseUtil = require('../utils/responseUtil');
 var excelUtil = require('../utils/excelUtil');
-var objUtil = require('../utils/ObjectUtil')
-var dateUtil =  require('../utils/DateFormater')
+var objUtil = require('../utils/ObjectUtil');
+var dateUtil = require('../utils/DateFormater');
 
 router
     .get('/index', function (req, res, next) {
         res.render('books_index');
     })
-    .get('/export', function (req, res, next) {
-        //TODO 从数据库加载数据并生成响应的格式
-        const data = [[1, 2, 3], [true, false, null, 'sheetjs'], ['foo', 'bar', new Date('2014-02-19T14:30Z'), '0.3'], ['baz', null, 'qux']];
-        var buffer = excelUtil.generateXlsx('sheetName', data);
-        responseUtil.setXlsxResponseHeaders(res);
-        res.write(buffer);
-        res.end();
+    .get('/template', function (req, res, next) {
+        res.download('public/file_template/book_template.xlsx', '图书数据导入模板.xlsx', function(err){
+            if (err) {
+                console.log(err);
+            } else {
+            }
+        });
     })
-    .post('/', function (req, res, next) {
+
+    .get('/export', function (req, res, next) {
+        bookService.queryAll(req.query,function (result) {
+            var rows = result.rows.map(function (item) {
+                return [
+                    item['name']||'',
+                    item['code']||'',
+                    item['author']||'',
+                    item['translator']||'',
+                    item['publisher']||'',
+                    item['date']?dateUtil.format(item['date'],'yyyy/MM/dd'):'',
+                    item['price']||''
+                ];
+            });
+            rows.unshift(['书名','图书编号','作者','译者','出版社','出版日期','价格']);
+            var date = dateUtil.format(new Date(),'yyyy年MM月dd日hh时mm分鸿合图书信息')+'.xlsx';
+            var buffer = excelUtil.generateXlsx('sheet1', rows);
+            responseUtil.setXlsxResponseHeaders(res,encodeURIComponent(date));
+            res.write(buffer);
+            res.end();
+        });
+    })
+    .post('/import', function (req, res, next) {
         upload(req, res, function (err) {
             if (err) {
-                // 发生错误
-                return
+                res.json({
+                    flag: false,
+                    msg: '文件传输错误!'
+                });
+                return;
             }
             var l = excelUtil.parseBookList(req.file.path);
-            //TODO 数据入库
-            fs.unlink(req.file.path, function (e) {
-                console.log(e);
-            });
-            res.json({flag: true});
-        })
+            function removeTmpFile() {
+                fs.unlink(req.file.path, function (e) {
+                    console.log(e);
+                });
+            }
+            bookService.bulkAdd(l,
+                function (result) {
+                    removeTmpFile();
+                    res.json({flag: true, msg: '成功导入' + result.length + '条数据'});
+                }, function () {
+                    removeTmpFile();
+                    res.json({
+                        flag: false,
+                        msg: '导入失败,请使用导入数据模板导入数据!'
+                    });
+                });
+        });
     })
     .post('/delete', function (req, res, next) {
         bookService.remove(req.body.ids, function (count) {

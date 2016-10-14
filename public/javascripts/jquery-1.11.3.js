@@ -5503,7 +5503,7 @@
 			dest.defaultSelected = dest.selected = src.defaultSelected;
 
 			// IE6-8 fails to set the defaultValue to the correct value when
-			// cloning other types of input fields
+			// cloning other types of input book_fields
 		} else if ( nodeName === "input" || nodeName === "textarea" ) {
 			dest.defaultValue = src.defaultValue;
 		}
@@ -8763,7 +8763,7 @@
 	}
 
 	/* Chain conversions given the request and the original response
-	 * Also sets the responseXXX fields on the jqXHR instance
+	 * Also sets the responseXXX book_fields on the jqXHR instance
 	 */
 	function ajaxConvert( s, response, jqXHR, isSuccess ) {
 		var conv2, current, conv, tmp, prev,
@@ -8933,7 +8933,7 @@
 		},
 
 		// Creates a full fledged settings object into target
-		// with both ajaxSettings and settings fields.
+		// with both ajaxSettings and settings book_fields.
 		// If target is omitted, writes into ajaxSettings.
 		ajaxSetup: function( target, settings ) {
 			return settings ?
@@ -9260,7 +9260,7 @@
 					response = ajaxHandleResponses( s, jqXHR, responses );
 				}
 
-				// Convert no matter what (that way responseXXX fields are always set)
+				// Convert no matter what (that way responseXXX book_fields are always set)
 				response = ajaxConvert( s, response, jqXHR, isSuccess );
 
 				// If successful, handle type chaining
@@ -9624,7 +9624,7 @@
 						// Open the socket
 						xhr.open( options.type, options.url, options.async, options.username, options.password );
 
-						// Apply custom fields if provided
+						// Apply custom book_fields if provided
 						if ( options.xhrFields ) {
 							for ( i in options.xhrFields ) {
 								xhr[ i ] = options.xhrFields[ i ];
