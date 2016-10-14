@@ -1,14 +1,14 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或者图书编号',menu:'#books_mm',searcher:function (name,status) {
+    <input id="books_search_name" class="easyui-searchbox" data-options="prompt:'请输入图书名称或者图书编号',menu:'#books_mm',searcher:function (name,status) {
         $('#books_dg').datagrid('load',{name:encodeURIComponent(name),
         status:status=='0'?'':status});
     }" style="width:100%">
 </div>
 <div id="books_mm">
-    <div data-options="name:'',iconCls:'icon-ok'">全部</div>
-    <div data-options="name:'loan'">借出</div>
-    <div data-options="name:'damaged'">损坏/丢失</div>
-    <div data-options="name:'inquiry'">入库</div>
+    <div data-options="name:'0',iconCls:'icon-ok'">全部</div>
+    <div data-options="name:'BORROWED'">借出</div>
+    <div data-options="name:'MISSED'">损坏/丢失</div>
+    <div data-options="name:'RETURNED'">入库</div>
 </div>
 <table id="books_dg" style="height: 97%;width: 99%"></table>
 <div id="books_dlg_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;" data-options="
@@ -69,38 +69,36 @@
         </div>
     </form>
 </div>
-<div id="books_dlg_dlg_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
+<div id="books_dlg_import" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
      data-options="
                     title: '导入',
                     closed: true,
                     modal: true,
                     draggable: false,
-                    iconCls: 'icon-redo',
+                    iconCls: 'icon-undo',
                     buttons: [{
                     text: '导入',
                     iconCls: 'icon-redo',
-                    handler: $.books.submitForms
+                    handler: $.books.importBooks
                     }, {
                     text: '取消',
                     iconCls: 'icon-cancel',
-                    handler: $.books.closeEditDialog
-                    }]
+                    handler: function(){
+                        $('#books_dlg_import').dialog('close');
+                    }
+                    }],
+                    onClose:function(){
+                        $('#books_dlg_import_ff').form('clear');
+                    }
                     ">
-    <form id="books_dialog_ff" class="easyui-form" method="post" data-options="novalidate:true">
-        <input id="bookslefile" type="file" style="display:none">
-        <div class="input-append">
-            <input id="books_photoCover" class="input-large" type="text" placeholder="选择文件" style="width: 210px;">
-            <a class="btn" onclick="$('input[id=bookslefile]').click();">浏览...</a>
-        </div>
+    <form id="books_dlg_import_ff" class="easyui-form" method="post" action="books/import" enctype="multipart/form-data" data-options="novalidate:true">
+        <input name="file" class="easyui-filebox" style="width:100%" data-options="prompt:'选择文件',buttonText:'选择'">
     </form>
 </div>
 <script type="text/javascript">
     $(function () {
-        $('input[id=bookslefile]').change(function() {
-            $('#books_photoCover').val($(this).val());
-        });
         $('#books_dg').datagrid({
-            url: '/books/list',
+            url: 'books/list',
             method: 'get',
             iconCls: 'icon-save',
             fitColumns: true,
@@ -151,9 +149,22 @@
                 }
             },{
                 text:'导入',
+                iconCls:'icon-undo',
+                handler:function(){
+                    $('#books_dlg_import').dialog('open');
+                }
+            },{
+                text:'导出',
                 iconCls:'icon-redo',
                 handler:function(){
-                    booksredo();
+                    var name = $('#books_search_name').val();
+                    window.location = 'books/export'+(name?('?name='+encodeURIComponent(name)):'');
+                }
+            },{
+                text:'数据模板',
+                plain:true,
+                handler:function(){
+                    window.location = 'books/template';
                 }
             }],
             columns: [[
@@ -260,23 +271,24 @@
                 }
             });
         }
-        function submitForms() {
+        function importBooks() {
             $.messager.progress({title:'数据导入中,请稍后...'});	// display the progress bar
-            $('#books_dialog_ff').form('enableValidation').form('submit', {
+            $('#books_dlg_import_ff').form('enableValidation').form('submit', {
                 onSubmit: function () {
                     var isValid = $(this).form('validate');
                     if (!isValid) {
-                        $.messager.progress('close');	// hide progress bar while the form is invalid
+                        $.messager.progress('close');
+                        $.messager.alert('提示','请选择文件!');
                     }
-                    return isValid;	// return false will stop the form submission
+                    return isValid;
                 },
                 success: function (data) {
                     data = $.parseJSON(data);
-                    $.messager.progress('close');	// hide progress bar while submit successfully
+                    $.messager.progress('close');
                     if (data.flag) {
-                        $.messager.alert('提示', '导入成功!');
-                        $('#books_dlg_dlg_edit').datagrid('reload');
-                        closeEditDialog();
+                        $.messager.alert('提示', data.msg||'导入成功!');
+                        $('#books_dlg_import').dialog('close');
+                        $('#books_dg').datagrid('reload');
                     } else {
                         $.messager.alert('提示', data.message || '导入失败,请检查网络连接或者权限!');
                     }
@@ -317,7 +329,7 @@
         $.extend({
             books:{
                 submitForm:submitForm,
-                submitForms:submitForms,
+                importBooks:importBooks,
                 closeEditDialog:closeEditDialog
             }
         });

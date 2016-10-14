@@ -6,7 +6,7 @@ var cookieParser = require('cookie-parser');
 var cookieSession = require('cookie-session')
 var bodyParser = require('body-parser');
 
-var routes = require('./routes/index');
+var index = require('./routes/index');
 var login = require('./routes/login');
 var users = require('./routes/users');
 var booksQuery = require('./routes/booksQuery');
@@ -41,7 +41,7 @@ app.use('/login', login);
 //     res.redirect("/login");
 //   }
 // })
-app.use('/', routes);
+app.use('/', index);
 app.use('/booksQuery', booksQuery);
 
 app.use('/books', books);
