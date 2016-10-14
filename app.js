@@ -6,14 +6,14 @@ var cookieParser = require('cookie-parser');
 var cookieSession = require('cookie-session')
 var bodyParser = require('body-parser');
 
-var routes = require('./service/routes/index');
-var login = require('./service/routes/login');
-var users = require('./service/routes/users');
-var booksQuery = require('./service/routes/booksQuery');
-var books = require('./service/routes/books');
-var borrow = require('./service/routes/borrow');
-var ret = require('./service/routes/return');
-var records = require('./service/routes/records');
+var routes = require('./routes/index');
+var login = require('./routes/login');
+var users = require('./routes/users');
+var booksQuery = require('./routes/booksQuery');
+var books = require('./routes/books');
+var borrow = require('./routes/borrow');
+var ret = require('./routes/return');
+var records = require('./routes/records');
 
 var app = express();
 
