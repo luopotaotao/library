@@ -1,13 +1,10 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',searcher:doSearch" style="width:100%">
-</div>
-<script>
-    function doSearch(name) {
-        $('#users_dg').datagrid('load', {
-            name: name
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',searcher: function (name) {
+        $('#records_dg').datagrid('load', {
+            name:encodeURIComponent(name)
         });
-    }
-</script>
+    }" style="width:100%">
+</div>
 <table id="records_dg" style="height: 97%;width: 99%"></table>
 <script type="text/javascript">
     $(function () {
@@ -19,8 +16,8 @@
             singleSelect: false,
             pagination: true,
             pageSize: 1,
+            rownumbers:true,
             columns: [[
-                {field: 'ck', checkbox: true},
                 {field: 'id', title: 'ID', hidden: true},
                 {
                     field: 'book.code', title: '图书编号', formatter: function (val, row) {

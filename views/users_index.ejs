@@ -1,5 +1,11 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入员工姓名或者员工编号',menu:'#users_mm',searcher:doSearch"
+    <input class="easyui-searchbox" data-options="prompt:'请输入员工姓名或者员工编号',menu:'#users_mm',searcher:function (code,name, role) {
+        $('#users_dg').datagrid('load',{
+            code:code,
+            name:name,
+            role:role=='0'?'':role
+        });
+    }"
            style="width:100%">
 </div>
 <div id="users_mm">
@@ -8,14 +14,6 @@
     <div data-options="name:'ADMIN'">管理员</div>
     <div data-options="name:'CUSTOM'">普通用户</div>
 </div>
-<script>
-    function doSearch(name, role) {
-        $('#users_dg').datagrid('load',{
-            name:name,
-            role:role=='0'?'':role
-        });
-    }
-</script>
 <table id="users_dg" style="height: 97%;width: 99%"></table>
 <div id="users_dlg_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
      data-options="
@@ -97,6 +95,9 @@
 </div>
 <script type="text/javascript">
     $(function () {
+        $('input[id=lefile]').change(function() {
+            $('#photoCover').val($(this).val());
+        });
         $('#users_dg').datagrid({
             url: '/users/list',
             method: 'get',
@@ -105,6 +106,7 @@
             singleSelect: false,
             pagination: true,
             pageSize: 10,
+            rownumbers:true,
             toolbar: [{
                 text: '添加',
                 iconCls: 'icon-add',
@@ -146,14 +148,13 @@
                         }
                     });
                 }
-            }
-                ,{
+            },{
                     text:'导入',
                     iconCls:'icon-redo',
                     handler:function(){
                         redo();
                     }
-                }],
+            }],
             columns: [[
                 {field: 'ck', checkbox: true},
                 {field: 'id', title: 'ID', hidden: true},
@@ -258,7 +259,7 @@
         }
         function submitForms() {
             $.messager.progress({title:'数据导入中,请稍后...'});	// display the progress bar
-            $('#users_dialog_ff').form('submit', {
+            $('#users_dialog_ff').form('enableValidation').form('submit', {
                 onSubmit: function () {
                     var isValid = $(this).form('validate');
                     if (!isValid) {
@@ -282,6 +283,7 @@
         function closeEditDialog() {
             $('#users_ff').form('clear');
             $('#users_dlg_edit').dialog('close');
+            $('#users_dialog_ff').form('clear');
             $('#users_dlg_dlg_edit').dialog('close');
         }
 

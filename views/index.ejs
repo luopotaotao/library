@@ -16,7 +16,7 @@
     <div style="width: 93%;display: inline-block;font-size: 20px;font-weight: bold;">鸿合图书管理系统</div>
     <div style="display: inline-block;">
         <a href="#" class="easyui-linkbutton" data-options="plain:true" onclick="$('#personal_information_edit').dialog('open')"><span><%=user.name%></span></a>
-        <a href="/login/logout">退出登录</a>
+        <a href="/login/logout" class="easyui-linkbutton">退出登录</a>
     </div>
 </div>
 <div id="personal_information_edit" class="easyui-dialog" style="width:100%;max-width:800px;padding:30px 60px;"
@@ -26,7 +26,10 @@
         modal: true,
         draggable: false
         ">
-    <img src="" style="width: 100px;height: 100px;display: inline-block;">
+    <div style="width: 100px;display: inline-block;text-align: center">
+        <img src="" style="width: 100px;height: 100px;">
+        <a href="#" class="easyui-linkbutton" data-options="plain:false" onclick="$('#password_edit').dialog('open')" style="padding: 3px 10px;margin-top: 10px;">修改密码</a>
+    </div>
     <div style="width: 42%;display: inline-block;vertical-align: top;margin:0 20px;">
         <div class="easyui-panel" title="个人信息" style="padding:10px;">
             <form id="personal_information_ff" class="easyui-form" method="post" data-options="novalidate:true">
@@ -50,7 +53,6 @@
                     <input class="easyui-textbox" name="email" style="width:100%"
                            data-options="label:'邮箱:',editable:false">
                 </div>
-                <a href="#" class="easyui-linkbutton" data-options="plain:false" onclick="$('#password_edit').dialog('open')">修改密码</a>
             </form>
         </div>
         <div id="password_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
@@ -138,7 +140,8 @@
         fitColumns: true,
         singleSelect: true,
         pagination: true,
-        pageSize: 10,
+        pageSize: 5,
+        pageList: [5,10,15,20],
         columns: [[
             {field: 'id', title: 'ID', hidden: true},
             {field: 'code', title: '图书编号'},

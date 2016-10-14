@@ -178,7 +178,7 @@ handler: $.books_manager.closeEditDialog
 
         function submitForm() {
             $.messager.progress({title:'数据保存中,请稍后...'});	// display the progress bar
-            $('#books_manager_ff').form('submit', {
+            $('#books_manager_ff').form('enableValidation').form('submit', {
                 onSubmit: function () {
                     var isValid = $(this).form('validate');
                     if (!isValid) {

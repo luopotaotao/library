@@ -56,12 +56,6 @@
 
 <script>
     $(function () {
-        $.extend({
-            borrow: {
-                submitForm: submitForm,
-                closeEditDialog: closeEditDialog
-            }
-        });
         $('#borrow_select_user_code').textbox({
             label:'借阅人编号:',
             required:true,
@@ -130,7 +124,7 @@
                 {field: 'code', title: '图书编号'},
                 {field: 'name', title: '图书名称'},
                 {field:'null',title:'操作',formatter:function (val,row) {
-                    return '<a onclick="function () { }">删除</a>';
+                    return "<a onclick='function(){}'>删除</a>";
                 }}
             ]]
         });
@@ -152,6 +146,7 @@
                         return;
                     }
                     var cache = $('#borrow_dg').data('cache')||[];
+                    //concat是连接的意思
                     cache = cache.concat(rows);
                     $('#borrow_dg').data('cache',cache);
 
@@ -167,16 +162,6 @@
                 {field: 'id', title: 'ID', hidden: true},
                 {field: 'code', title: '图书编号'},
                 {field: 'name', title: '图书名称'},
-                {field: 'borrow_date', title: '借阅日期'},
-                {field: 'deadline', title: '应归还日期'},
-                {field: 'e_user_id', title: '借阅人'}
-
-            ]],
-            columns: [[
-                {field: 'ck', checkbox: true},
-                {field: 'id', title: 'ID', hidden: true},
-                {field: 'code', title: '标号'},
-                {field: 'name', title: '名称'},
                 {field: 'author', title: '作者'},
                 {field: 'translator', title: '译者'},
                 {field: 'publisher', title: '出版社'},
@@ -266,6 +251,7 @@
 
         function showCacheDialog(data) {
             var rows = $('#borrow_dg').data('cache');
+            alert(rows.length);
             if(rows&&rows.length){
                 var $dlg = $('#borrow_dlg_cache');
                 $dlg.find('#borrow_dialog_dg').datagrid('loadData',{rows:rows});
@@ -290,32 +276,43 @@
             var book_ids = $.map(books,function (book) {
                 return book.id;
             });
-            $.messager.progress({title:'数据保存中,请稍后...'});
-            $.ajax({
-                url:'/borrow/action',
-                type:'post',
-                dataType:'json',
-                data:{
-                    user_id:user_id,
-                    book_ids:book_ids
+//            $.messager.progress({title:'数据保存中,请稍后...'});
+            $('#borrow_dialog_ff').form('enableValidation').form('submit', {
+                onSubmit: function () {
+                    var isValid = $(this).form('validate');
+                    if (!isValid) {
+                        $.messager.progress('close');	// hide progress bar while the form is invalid
+                    }
+                    return isValid;	// return false will stop the form submission
+                },
+                success: function (data) {
+                    $.ajax({
+                        url:'/borrow/action',
+                        type:'post',
+                        dataType:'json',
+                        data:{
+                            user_id:user_id,
+                            book_ids:book_ids
+                        }
+                    }).done(function (ret) {
+                        if (ret.flag) {
+                            $.messager.alert('提示', '保存成功!');
+                            $('#borrow_dg').datagrid('reload');
+                            $('#borrow_dlg_cache').dialog('close');
+                        } else {
+                            $.messager.alert('提示', data.msg || '保存失败,请检查网络连接或者权限!');
+                        }
+                    }).fail(function () {
+                        $.messager.alert('提示', data.msg || '保存失败,请检查网络连接或者权限!');
+                    }).always(function () {
+                        $.messager.progress('close');
+                    });
                 }
-            }).done(function (ret) {
-                if (ret.flag) {
-                    $.messager.alert('提示', '保存成功!');
-                    $('#borrow_dg').datagrid('reload');
-                    closeEditDialog();
-                } else {
-                    $.messager.alert('提示', data.msg || '保存失败,请检查网络连接或者权限!');
-                }
-            }).fail(function () {
-                $.messager.alert('提示', data.msg || '保存失败,请检查网络连接或者权限!');
-            }).always(function () {
-                $.messager.progress('close');
             });
+
         }
 
         function closeEditDialog() {
-            $('#borrow_ff').form('clear');
             $('#borrow_dlg_cache').dialog('close');
         }
 
@@ -348,6 +345,12 @@
                 $.messager.progress('close');
             });
         }
+        $.extend({
+            borrow: {
+                submitForm: submitForm,
+                closeEditDialog: closeEditDialog
+            }
+        });
     });
 
 </script>

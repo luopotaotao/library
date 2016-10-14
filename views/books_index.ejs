@@ -1,11 +1,15 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或者图书编号',searcher:doSearch" style="width:100%">
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或者图书编号',menu:'#books_mm',searcher:function (name,status) {
+        $('#books_dg').datagrid('load',{name:encodeURIComponent(name),
+        status:status=='0'?'':status});
+    }" style="width:100%">
 </div>
-<script>
-    function doSearch(name) {
-        $('#books_dg').datagrid('load',{name:name});
-    }
-</script>
+<div id="books_mm">
+    <div data-options="name:'',iconCls:'icon-ok'">全部</div>
+    <div data-options="name:'loan'">借出</div>
+    <div data-options="name:'damaged'">损坏/丢失</div>
+    <div data-options="name:'inquiry'">入库</div>
+</div>
 <table id="books_dg" style="height: 97%;width: 99%"></table>
 <div id="books_dlg_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;" data-options="
         title: '添加图书',
@@ -25,15 +29,15 @@
         ">
     <form id="books_ff" class="easyui-form" method="post" data-options="novalidate:true">
         <div style="margin-bottom:20px;display: none">
-            <input class="easyui-textbox" name="id" style="width:100%" data-options="label:'图书记录id:',required:true">
+            <input class="easyui-textbox" name="id" style="width:100%" data-options="label:'图书记录id:'">
         </div>
         <div style="margin-bottom:20px">
             <input class="easyui-textbox" name="code" style="width:100%"
-                   data-options="label:'编号:',required:true">
+                   data-options="label:'图书编号:',required:true">
         </div>
         <div style="margin-bottom:20px">
             <input class="easyui-textbox" name="name" style="width:100%"
-                   data-options="label:'名称:',required:true">
+                   data-options="label:'图书名称:',required:true">
         </div>
         <div style="margin-bottom:20px">
             <input class="easyui-textbox" name="author" style="width:100%"
@@ -65,8 +69,36 @@
         </div>
     </form>
 </div>
+<div id="books_dlg_dlg_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
+     data-options="
+                    title: '导入',
+                    closed: true,
+                    modal: true,
+                    draggable: false,
+                    iconCls: 'icon-redo',
+                    buttons: [{
+                    text: '导入',
+                    iconCls: 'icon-redo',
+                    handler: $.books.submitForms
+                    }, {
+                    text: '取消',
+                    iconCls: 'icon-cancel',
+                    handler: $.books.closeEditDialog
+                    }]
+                    ">
+    <form id="books_dialog_ff" class="easyui-form" method="post" data-options="novalidate:true">
+        <input id="bookslefile" type="file" style="display:none">
+        <div class="input-append">
+            <input id="books_photoCover" class="input-large" type="text" placeholder="选择文件" style="width: 210px;">
+            <a class="btn" onclick="$('input[id=bookslefile]').click();">浏览...</a>
+        </div>
+    </form>
+</div>
 <script type="text/javascript">
     $(function () {
+        $('input[id=bookslefile]').change(function() {
+            $('#books_photoCover').val($(this).val());
+        });
         $('#books_dg').datagrid({
             url: '/books/list',
             method: 'get',
@@ -75,6 +107,7 @@
             singleSelect: false,
             pagination: true,
             pageSize: 10,
+            rownumbers:true,
             toolbar: [{
                 text: '添加',
                 iconCls: 'icon-add',
@@ -116,12 +149,18 @@
                         }
                     });
                 }
+            },{
+                text:'导入',
+                iconCls:'icon-redo',
+                handler:function(){
+                    booksredo();
+                }
             }],
             columns: [[
                 {field: 'ck', checkbox: true},
                 {field: 'id', title: 'ID', hidden: true},
-                {field: 'code', title: '标号'},
-                {field: 'name', title: '名称'},
+                {field: 'code', title: '图书编号'},
+                {field: 'name', title: '图书名称'},
                 {field: 'author', title: '作者'},
                 {field: 'translator', title: '译者'},
                 {field: 'publisher', title: '出版社'},
@@ -146,6 +185,13 @@
                 });
             }
         });
+        function booksredo(data){
+            var $form = $('#books_dialog_ff');
+            $form.form({url: '/books/update'});
+            $form.form('load', data);
+            $('#books_dlg_dlg_edit').dialog({title: '编辑用户'});
+            $('#books_dlg_dlg_edit').dialog('open');
+        }
         function createColumnMenu() {
             $.cmenu = $('<div/>').appendTo('body');
             $.cmenu.menu({
@@ -193,7 +239,7 @@
 
         function submitForm() {
             $.messager.progress({title:'数据保存中,请稍后...'});	// display the progress bar
-            $('#books_ff').form('submit', {
+            $('#books_ff').form('enableValidation').form('submit', {
                 onSubmit: function () {
                     var isValid = $(this).form('validate');
                     if (!isValid) {
@@ -214,10 +260,35 @@
                 }
             });
         }
+        function submitForms() {
+            $.messager.progress({title:'数据导入中,请稍后...'});	// display the progress bar
+            $('#books_dialog_ff').form('enableValidation').form('submit', {
+                onSubmit: function () {
+                    var isValid = $(this).form('validate');
+                    if (!isValid) {
+                        $.messager.progress('close');	// hide progress bar while the form is invalid
+                    }
+                    return isValid;	// return false will stop the form submission
+                },
+                success: function (data) {
+                    data = $.parseJSON(data);
+                    $.messager.progress('close');	// hide progress bar while submit successfully
+                    if (data.flag) {
+                        $.messager.alert('提示', '导入成功!');
+                        $('#books_dlg_dlg_edit').datagrid('reload');
+                        closeEditDialog();
+                    } else {
+                        $.messager.alert('提示', data.message || '导入失败,请检查网络连接或者权限!');
+                    }
+                }
+            });
+        }
 
         function closeEditDialog() {
             $('#books_ff').form('clear');
             $('#books_dlg_edit').dialog('close');
+            $('#books_dialog_ff').form('clear');
+            $('#books_dlg_dlg_edit').dialog('close');
         }
 
         function remove(ids,callback) {
@@ -246,6 +317,7 @@
         $.extend({
             books:{
                 submitForm:submitForm,
+                submitForms:submitForms,
                 closeEditDialog:closeEditDialog
             }
         });
