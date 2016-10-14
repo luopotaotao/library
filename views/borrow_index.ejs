@@ -251,7 +251,6 @@
 
         function showCacheDialog(data) {
             var rows = $('#borrow_dg').data('cache');
-            alert(rows.length);
             if(rows&&rows.length){
                 var $dlg = $('#borrow_dlg_cache');
                 $dlg.find('#borrow_dialog_dg').datagrid('loadData',{rows:rows});

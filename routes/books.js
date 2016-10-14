@@ -25,6 +25,9 @@ router
     })
 
     .get('/export', function (req, res, next) {
+        if (req.query.name) {
+            req.query.name = decodeURIComponent(req.query.name);
+        }
         bookService.queryAll(req.query,function (result) {
             var rows = result.rows.map(function (item) {
                 return [
@@ -54,7 +57,11 @@ router
                 });
                 return;
             }
-            var l = excelUtil.parseBookList(req.file.path);
+            try {
+                var l = excelUtil.parseBookList(req.file.path);
+            } catch (e) {
+                console.log(e);
+            }
             function removeTmpFile() {
                 fs.unlink(req.file.path, function (e) {
                     console.log(e);
@@ -114,6 +121,9 @@ router
         });
     })
     .get('/list', function (req, res, next) {
+        if (req.query.name) {
+            req.query.name = decodeURIComponent(req.query.name);
+        }
         bookService.query(req.query, function (result) {
             res.json(result || {total: 0, rows: []});
         });

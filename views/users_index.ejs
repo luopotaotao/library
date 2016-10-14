@@ -1,8 +1,7 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入员工姓名或者员工编号',menu:'#users_mm',searcher:function (code,name, role) {
+    <input id="users_search_name" class="easyui-searchbox" data-options="prompt:'请输入员工姓名或者员工编号',menu:'#users_mm',searcher:function (name,role) {
         $('#users_dg').datagrid('load',{
-            code:code,
-            name:name,
+            name:encodeURIComponent(name),
             role:role=='0'?'':role
         });
     }"
@@ -68,7 +67,7 @@
 
     </form>
 </div>
-<div id="users_dlg_dlg_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
+<div id="users_dialog_import" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
      data-options="
                     title: '导入',
                     closed: true,
@@ -77,29 +76,27 @@
                     iconCls: 'icon-redo',
                     buttons: [{
                     text: '导入',
-                    iconCls: 'icon-redo',
-                    handler: $.users.submitForms
+                    iconCls: 'icon-undo',
+                    handler: $.users.importUsers
                     }, {
                     text: '取消',
                     iconCls: 'icon-cancel',
-                    handler: $.users.closeEditDialog
-                    }]
+                    handler: function(){
+                        $('#users_dlg_import').dialog('close');
+                    }
+                    }],
+                    onClose:function(){
+                        $('#users_dlg_import_ff').form('clear');
+                    }
                     ">
-    <form id="users_dialog_ff" class="easyui-form" method="post" data-options="novalidate:true">
-        <input id="lefile" type="file" style="display:none">
-        <div class="input-append">
-            <input id="photoCover" class="input-large" type="text" placeholder="选择文件" style="width: 210px;">
-            <a class="btn" onclick="$('input[id=lefile]').click();">浏览...</a>
-        </div>
+    <form id="users_dlg_import_ff" class="easyui-form" action="books/import" method="post" enctype="multipart/form-data" data-options="novalidate:true">
+        <input name="file" class="easyui-filebox" style="width:100%" data-options="prompt:'选择文件',buttonText:'选择'">
     </form>
 </div>
 <script type="text/javascript">
     $(function () {
-        $('input[id=lefile]').change(function() {
-            $('#photoCover').val($(this).val());
-        });
         $('#users_dg').datagrid({
-            url: '/users/list',
+            url: 'users/list',
             method: 'get',
             iconCls: 'icon-save',
             fitColumns: true,
@@ -152,8 +149,21 @@
                     text:'导入',
                     iconCls:'icon-redo',
                     handler:function(){
-                        redo();
+                        $('#users_dialog_import').dialog('open');
                     }
+            },{
+                text:'导出',
+                iconCls:'icon-redo',
+                handler:function(){
+                    var name = $('#books_search_name').val();
+                    window.location = 'users/export'+(name?('?name='+encodeURIComponent(name)):'');
+                }
+            },{
+                text:'数据模板',
+                plain:true,
+                handler:function(){
+                    window.location = 'users/template';
+                }
             }],
             columns: [[
                 {field: 'ck', checkbox: true},
@@ -214,13 +224,6 @@
                 });
             }
         }
-        function redo(data){
-            var $form = $('#users_dialog_ff');
-            $form.form({url: '/users/update'});
-            $form.form('load', data);
-            $('#users_dlg_dlg_edit').dialog({title: '编辑用户'});
-            $('#users_dlg_dlg_edit').dialog('open');
-        }
         function showEditDialog(data) {
             var $form = $('#users_ff');
             if (data) {
@@ -257,23 +260,24 @@
                 }
             });
         }
-        function submitForms() {
+        function importUsers() {
             $.messager.progress({title:'数据导入中,请稍后...'});	// display the progress bar
-            $('#users_dialog_ff').form('enableValidation').form('submit', {
+            $('#users_dlg_import_ff').form('enableValidation').form('submit', {
                 onSubmit: function () {
                     var isValid = $(this).form('validate');
                     if (!isValid) {
-                        $.messager.progress('close');	// hide progress bar while the form is invalid
+                        $.messager.progress('close');
+                        $.messager.alert('提示','请选择文件!');
                     }
-                    return isValid;	// return false will stop the form submission
+                    return isValid;
                 },
                 success: function (data) {
                     data = $.parseJSON(data);
-                    $.messager.progress('close');	// hide progress bar while submit successfully
+                    $.messager.progress('close');
                     if (data.flag) {
-                        $.messager.alert('提示', '导入成功!');
-                        $('#users_dlg_dlg_edit').datagrid('reload');
-                        closeEditDialog();
+                        $.messager.alert('提示', data.msg||'导入成功!');
+                        $('#users_dialog_import').dialog('close');
+                        $('#users_dg').datagrid('reload');
                     } else {
                         $.messager.alert('提示', data.message || '导入失败,请检查网络连接或者权限!');
                     }
@@ -283,8 +287,6 @@
         function closeEditDialog() {
             $('#users_ff').form('clear');
             $('#users_dlg_edit').dialog('close');
-            $('#users_dialog_ff').form('clear');
-            $('#users_dlg_dlg_edit').dialog('close');
         }
 
         function remove(ids,callback) {
@@ -312,7 +314,7 @@
         $.extend({
             users: {
                 submitForm: submitForm,
-                submitForms: submitForms,
+                importUsers: importUsers,
                 closeEditDialog: closeEditDialog
             }
         });

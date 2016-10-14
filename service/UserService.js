@@ -72,7 +72,7 @@ function query(params, callback) {
         rows = params.hasOwnProperty('rows') ? parseInt(params.rows) : 10,
         where = {deleted: false};
     if (params.name) {
-        where.name = {$like: ['%', decodeURIComponent(params.name), '%'].join('')};
+        where.name = {$like: ['%', params.name, '%'].join('')};
     }
     if (params.code) {
         where.code = {$like: ['%', params.code, '%'].join('')};
@@ -98,7 +98,7 @@ function queryAll(params, callback) {
     }
     var where = {deleted: false};
     if (params.name) {
-        where.name = {$like: ['%', decodeURIComponent(params.name), '%'].join('')};
+        where.name = {$like: ['%', params.name, '%'].join('')};
     }
     if (params.code) {
         where.code = {$like: ['%', params.code, '%'].join('')};
