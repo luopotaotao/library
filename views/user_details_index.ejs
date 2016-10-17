@@ -1,0 +1,125 @@
+<div style="display:inline-flex">
+    <div class="easyui-panel" title="个人信息"
+         style="width:300px;height:320px;padding:10px;overflow: hidden;display: inline-block">
+        <form id="users_user_info_ff" class="easyui-form" method="post" data-options="novalidate:true">
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox input-no-border" name="name" style="width:100%"
+                       data-options="label:'姓名:',editable:false">
+            </div>
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox input-no-border" name="code" style="width:100%"
+                       data-options="label:'编号:',editable:false">
+            </div>
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox input-no-border" name="role" style="width:100%"
+                       data-options="label:'角色:',editable:false">
+            </div>
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox" name="phone" style="width:100%"
+                       data-options="label:'电话:',editable:false">
+            </div>
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox" name="email" style="width:100%"
+                       data-options="label:'邮箱:',editable:false">
+            </div>
+            <div style="margin-bottom:20px">
+                <a href="#" class="easyui-linkbutton" data-options="plain:false"
+                   onclick="$('#password_edit').dialog('open')"
+                   style="padding: 3px 10px;margin-top: 10px;">修改密码</a>
+            </div>
+        </form>
+    </div>
+    <div class="easyui-panel" title="借阅统计" style="padding:10px;height:320px;display: inline-block">
+        <form id="users_statistic_ff" class="easyui-form" data-options="novalidate:true">
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox input-no-border" name="year_count" style="width:100%"
+                       data-options="label:'本年度借阅:',editable:false">
+            </div>
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox input-no-border" name="season_count" style="width:100%"
+                       data-options="label:'本季度借阅:',editable:false">
+            </div>
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox input-no-border" name="month_count" style="width:100%"
+                       data-options="label:'本月度借阅:',editable:false">
+            </div>
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox input-no-border" name="borrow_count" style="width:100%"
+                       data-options="label:'当前借阅数:',editable:false">
+            </div>
+        </form>
+    </div>
+</div>
+<div id="password_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
+     data-options="
+        title: '修改密码',
+        closed: true,
+        modal: true,
+        draggable: false,
+        buttons: [{
+            text: '确认',
+            iconCls: 'icon-ok',
+            handler: $.password_edit.submitForm
+            }, {
+            text: '取消',
+            iconCls: 'icon-cancel',
+            handler: $.password_edit.closeEditDialog
+            }]
+        ">
+    <form id="password_ff" class="easyui-form" method="post" data-options="novalidate:true">
+        <div style="margin-bottom:20px">
+            <input class="easyui-textbox" name="name" style="width:100%"
+                   data-options="label:'原始密码:',required:true">
+        </div>
+        <div style="margin-bottom:20px">
+            <input class="easyui-textbox" name="code" style="width:100%"
+                   data-options="label:'新密码:',required:true" validType="length[4,32]" id="password" type="password">
+        </div>
+        <div style="margin-bottom:20px">
+            <input class="easyui-textbox" name="role" style="width:100%"
+                   data-options="label:'确认密码:',required:true" id="repassword" type="password"
+                   validType="equalTo['#password']" invalidMessage="两次输入密码不匹配">
+        </div>
+    </form>
+</div>
+
+<div class="easyui-panel" title="我的借阅记录列表">
+    <table id="personal_information_dialog_dg" class="easyui-datagrid" style="width: 100%" rownumbers="true"
+           data-options="
+        href:''
+    ">
+        <thead>
+        <th data-options="field: 'id', title: 'ID', hidden: true"></th>
+        <th data-options="field: 'code', title: '图书编号'"></th>
+        <th data-options="field: 'name', title: '图书名称'"></th>
+        <th data-options="field: 'borrow_date', title: '借阅日期'"></th>
+        <th data-options="field: 'deadline', title: '应归还日期'"></th>
+        <th data-options="field: 'return_date', title: '实际归还日期'"></th>
+        <th data-options="field: 'late_days', title: '逾期天数'"></th>
+        </thead>
+    </table>
+</div>
+<script type="text/javascript">
+    $(function () {
+        loadStatistic();
+        loadUserInfo();
+        function loadStatistic() {
+            $.ajax({
+                url: 'users/user_details/user_statistic',
+                type: 'get',
+                dataType: 'json'
+            }).done(function (ret) {
+                $('#users_statistic_ff').form('load', ret);
+            });
+        }
+        function loadUserInfo() {
+            $.ajax({
+                url: 'users/user_details/user_info',
+                type: 'get',
+                dataType: 'json'
+            }).done(function (ret) {
+                $('#users_user_info_ff').form('load', ret);
+            });
+        }
+    });
+</script>

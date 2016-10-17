@@ -4,12 +4,49 @@
 "use strict";
 var util = require("util");
 var User = require('../db/libraryModels').User;
+const crypto = require('crypto');
 
+function sha1(source) {
+    return crypto.createHash('sha1', '').update('' + source).digest('hex');
+}
 function add(user, callback, errorHandler) {
-    User.create(user).then(callback).catch(errorHandler);
+    User.count({
+        where:{
+            code:user.code
+        }
+    }).then(function (ret) {
+        if(ret>0){
+            errorHandler({flag:false,msg:'工号已存在!'});
+        }else{
+            user.password = sha1(user.password);
+            User.create(user).then(callback).catch(errorHandler);
+        }
+    }).catch(errorHandler);
 }
 function bulkAdd(users,callback,errorHandler) {
-    User.bulkCreate(users, { validate: true}).then(callback).catch(errorHandler);
+    var codes = users.map(function (item) {
+        return item.code;
+    });
+    if(codes.length>0){
+        User.findAll({
+            where:{
+                code:{
+                    $in:codes
+                }
+            }
+        }).then(function (result) {
+            if(result&&result.length>0){
+                errorHandler({flag:false,err:'exist',data:result});
+            }else{
+                users.forEach(function (item) {
+                    item.password = sha1(item.password||'12345678');
+                });
+                User.bulkCreate(users, { validate: true}).then(callback).catch(errorHandler);
+            }
+        });
+    }
+
+
 }
 /**
  *
@@ -81,6 +118,7 @@ function query(params, callback) {
         where.role = params.role;
     }
     User.findAndCountAll({
+        attributes: { exclude: ['password'] },
         where: where,
         offset: (page - 1) * rows,
         limit: rows
