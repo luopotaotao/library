@@ -38,15 +38,15 @@
                 </div>
                 <div style="margin-bottom:20px">
                     <input id="borrow_select_user_borrow_date" class="easyui-textbox dt" name="borrow_date" style="width:100%"
-                           data-options="label:'借阅日期:',required:true,editable:false">
+                           data-options="label:'借阅日期:',required:true,editable:false,disabled:true">
                 </div>
                 <div style="margin-bottom:20px">
                     <input id="borrow_select_user_return_date" class="easyui-textbox dt" name="deadline" style="width:100%"
-                           data-options="label:'应归还日期:',required:true,editable:false">
+                           data-options="label:'应归还日期:',required:true,editable:false,disabled:true">
                 </div>
                 <div style="margin-bottom:20px">
                     <input id="borrow_select_user_period" class="easyui-textbox" name="data" style="width:100%"
-                           data-options="label:'借阅周期:',required:true,editable:false">
+                           data-options="label:'借阅周期:',required:true,editable:false,disabled:true">
                 </div>
 
             </form>
@@ -74,7 +74,7 @@
                     $('#borrow_select_user_name').textbox('setText',name);
                     $('#borrow_select_user_period').textbox('setText',period);
                     var date = new Date();
-                    var deadline = period?new Date(period*1000*60*60*24):null;
+                    var deadline = period?new Date(date.getTime()+period*1000*60*60*24):null;
                     $('#borrow_select_user_borrow_date').datebox('setValue',date);
                     $('#borrow_select_user_return_date').datebox('setValue',deadline);
 
@@ -124,7 +124,7 @@
                 {field: 'code', title: '图书编号'},
                 {field: 'name', title: '图书名称'},
                 {field:'null',title:'操作',formatter:function (val,row) {
-                    return "<a onclick='function(){}'>删除</a>";
+                    return "<a href='javascript:void(0);' onclick='javascript:$.borrow.removeCurrentRow(this)'>删除</a>";
                 }}
             ]]
         });
@@ -145,6 +145,17 @@
                         $.messager.alert('提示', '请选择要加入的行!');
                         return;
                     }
+                    var occupied = $.grep(rows,function (row) {
+                        return {BORROWED:true,MISSED:false}[row.status];
+                    });
+                    if(occupied&&occupied.length){
+                        var msg = $.map(occupied,function (item) {
+                            return item.name;
+                        });
+                        $.messager.alert('提示','以下图书处于借出或损毁状态,不可借阅:<br><br>&nbsp;&nbsp;&nbsp;&nbsp;'+msg.join(','));
+                        return;
+                    }
+
                     var cache = $('#borrow_dg').data('cache')||[];
                     //concat是连接的意思
                     cache = cache.concat(rows);
@@ -260,7 +271,24 @@
             }
 
         }
-
+        function removeCurrentRow(target) {
+            var $this = $(target);
+            var index = $this.parents('.datagrid-row').first().attr('datagrid-row-index')
+            var $dg = $this.parents('.datagrid-view').first().find('.datagrid-f');
+            $dg.datagrid('deleteRow',index);
+            var rows = $dg.datagrid('getRows');
+            if(!rows||rows.length<1){
+                $.messager.show({
+                    title:'提示',
+                    msg:'请选择要借阅的书目!',
+                    timeout:1500,
+                    showType:'fade'
+                });
+                $('#borrow_dlg_cache').dialog('close');
+            }else{
+                $dg.datagrid('loadData',{rows:rows});
+            }
+        }
         function submitForm() {
             var user_id = $('#borrow_select_user_code').textbox('getValue');
             var books = $('#borrow_dg').data('cache');
@@ -347,7 +375,8 @@
         $.extend({
             borrow: {
                 submitForm: submitForm,
-                closeEditDialog: closeEditDialog
+                closeEditDialog: closeEditDialog,
+                removeCurrentRow:removeCurrentRow
             }
         });
     });
