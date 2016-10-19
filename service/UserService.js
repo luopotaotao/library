@@ -11,42 +11,40 @@ function sha1(source) {
 }
 function add(user, callback, errorHandler) {
     User.count({
-        where:{
-            code:user.code
+        where: {
+            code: user.code
         }
     }).then(function (ret) {
-        if(ret>0){
-            errorHandler({flag:false,msg:'工号已存在!'});
-        }else{
+        if (ret > 0) {
+            errorHandler({flag: false, msg: '工号已存在!'});
+        } else {
             user.password = sha1(user.password);
             User.create(user).then(callback).catch(errorHandler);
         }
     }).catch(errorHandler);
 }
-function bulkAdd(users,callback,errorHandler) {
+function bulkAdd(users, callback, errorHandler) {
     var codes = users.map(function (item) {
         return item.code;
     });
-    if(codes.length>0){
+    if (codes.length > 0) {
         User.findAll({
-            where:{
-                code:{
-                    $in:codes
+            where: {
+                code: {
+                    $in: codes
                 }
             }
         }).then(function (result) {
-            if(result&&result.length>0){
-                errorHandler({flag:false,err:'exist',data:result});
-            }else{
+            if (result && result.length > 0) {
+                errorHandler({flag: false, err: 'exist', data: result});
+            } else {
                 users.forEach(function (item) {
-                    item.password = sha1(item.password||'12345678');
+                    item.password = sha1(item.password || '66666666');
                 });
-                User.bulkCreate(users, { validate: true}).then(callback).catch(errorHandler);
+                User.bulkCreate(users, {validate: true}).then(callback).catch(errorHandler);
             }
         });
     }
-
-
 }
 /**
  *
@@ -99,7 +97,19 @@ function update(user, callback, errorHandler) {
         }
     }).catch(errorHandler)
 }
-
+function resetPassword(id, password, new_password,callback) {
+    User.findById(id).then(function (user) {
+        if (user.id && user.password == password) {
+            user.update({password: new_password}, {fields: ['password']}).then(callback).catch(function () {
+                callback({flag:false,msg:'服务器错误!'});
+            });
+        }else{
+            callback({flag:false,msg:'密码错误!'});
+        }
+    }).catch(function () {
+        callback({flag:false,msg:'服务器错误!'});
+    })
+}
 function query(params, callback) {
     if (!util.isObject(params)) {
         callback();
@@ -107,21 +117,28 @@ function query(params, callback) {
     }
     var page = params.hasOwnProperty('page') ? parseInt(params.page) : 1,
         rows = params.hasOwnProperty('rows') ? parseInt(params.rows) : 10,
-        where = {deleted: false};
+        where = {deleted: false,id:{$gt:0}};
     if (params.name) {
-        where.name = {$like: ['%', params.name, '%'].join('')};
-    }
-    if (params.code) {
-        where.code = {$like: ['%', params.code, '%'].join('')};
+        where.$or = {
+            name: {
+                $like: ['%', params.name, '%'].join('')
+            },
+            code: {
+                $like: ['%', params.name, '%'].join('')
+            }
+        };
     }
     if (params.role) {
         where.role = params.role;
     }
     User.findAndCountAll({
-        attributes: { exclude: ['password'] },
+        attributes: {exclude: ['password']},
         where: where,
         offset: (page - 1) * rows,
-        limit: rows
+        limit: rows,
+        order: [
+            ['updatedAt', 'desc']
+        ]
     }).then(function (result) {
         result.total = result.count;
         delete result.count;
@@ -145,7 +162,10 @@ function queryAll(params, callback) {
         where.role = params.role;
     }
     User.findAndCountAll({
-        where: where
+        where: where,
+        order: [
+            ['updatedAt', 'desc']
+        ]
     }).then(function (result) {
         result.total = result.count;
         delete result.count;
@@ -164,7 +184,7 @@ function findByUsernamePassword(username, password, callback) {
     }).then(callback);
 }
 
-function findById(id, callback,errHandler) {
+function findById(id, callback, errHandler) {
     User.findById(id).then(callback).catch(errHandler);
 }
 function getNewInstance(callback) {
@@ -174,14 +194,15 @@ function getNewInstance(callback) {
 
 module.exports = {
     add: add,
-    bulkAdd:bulkAdd,
+    bulkAdd: bulkAdd,
     remove: remove,
     update: update,
     query: query,
-    queryAll:queryAll,
+    queryAll: queryAll,
     findById: findById,
     findByUsernamePassword: findByUsernamePassword,
-    getNewInstance: getNewInstance
+    getNewInstance: getNewInstance,
+    resetPassword:resetPassword
 }
 
 

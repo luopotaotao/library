@@ -43,10 +43,16 @@ function parseDate(date) {
  * @param fields 要解析的列名与数据库中对应的字段
  * @returns {*} 解析成功返回解析的list数组,否则返回失败信息
  */
-
-
 function parseXlsx(filePath, fields) {
-    var excel = xlsx.parse(filePath);
+    var excel = null;
+    try {
+        excel = xlsx.parse(filePath);
+    } catch (e) {
+        return {
+            flag:false,
+            msg:'解析文件错误,请检查文件是否完整!'
+        }
+    }
     if (excel && excel.length && excel[0] && excel[0]['data']) {  //只解析Xlsx文件的第一个sheet
         var field_index = {};
         var cols = excel[0]['data'][0];     //要求第一行为标题行,标题行要与配置的字段值一致,否则不予解析
@@ -63,16 +69,6 @@ function parseXlsx(filePath, fields) {
             }
             field_index[fields[key]] = index;
         }
-        // Object.keys(fields).forEach(function (key) {
-        //     var index = cols.indexOf(key);
-        //     if(index<0){
-        //         return {
-        //             flag: false,
-        //             msg: 'Excel格式不符合要求,未能解析!'
-        //         }
-        //     }
-        //     field_index[fields[key]] = index;
-        // });
         var list = [];
         var data = excel[0]['data'];
         data.shift();//剔除标题行,只保留数据

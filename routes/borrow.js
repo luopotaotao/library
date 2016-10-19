@@ -59,9 +59,9 @@ router
         res.render('records_index');
     })
     .get('/list', function (req, res, next) {
-        var username = req.query.username,
-            bookname = req.query.bookname;
-        recordService.query(username, bookname, function (result) {
+        var name = req.query.name;
+        req.query.name=name?decodeURIComponent(name):'';
+        recordService.query(req.query, function (result) {
             res.json(result);
         });
     });

@@ -1,47 +1,54 @@
-
 <div style="width:60%">
     <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',searcher:function (name) {
         $('#borrow_dg').datagrid('load',{name:encodeURIComponent(name)});
     }" style="width:100%">
 </div>
 <table id="borrow_dg" style="height: 97%;width: 99%"></table>
-<div id="borrow_dlg_cache" class="easyui-dialog" style="width:100%;max-width:800px;padding:30px 60px;" data-options="
+<div id="borrow_dlg_cache" class="easyui-dialog"
+     style="width:100%;max-width:800px;padding:10px 20px;margin-right: -10px" data-options="
     title: '借阅一览表',
-    closed: true,
-    modal: true,
-    draggable: false,
+    left:$(window).width()/2,
+    top:$(window).height()/2,
+    closed: false,
+    modal: false,
+    draggable: true,
+    minimizable:false,
+    collapsible:true,
+    closable:false,
     buttons: [{
     text: '借阅',
     iconCls: 'icon-ok',
     handler: $.borrow.submitForm
     }, {
-    text: '取消',
+    text: '清空',
     iconCls: 'icon-cancel',
-    handler: $.borrow.closeEditDialog
+    handler: $.borrow.clearEditDialog
     }],
     onClose:function(){
         $(this).find('form').form('clear');
     }
     ">
-    <div style="width: 49%;display: inline-block;">
-        <table id="borrow_dialog_dg" title="图书信息" style="width: 99%;"></table>
+    <div style="width: 59%;display: inline-block;">
+        <table id="borrow_dlg_dg" title="图书信息" style="width: 99%;"></table>
     </div>
-    <div style="width: 50%;display: inline-block;vertical-align: top;">
+    <div style="width: 40%;display: inline-block;vertical-align: top;">
         <div class="easyui-panel" data-options="title:'借阅信息'" style="padding:10px;">
             <form id="borrow_dialog_ff" class="easyui-form" data-options="novalidate:true,">
                 <div style="margin-bottom:20px">
                     <input id="borrow_select_user_code" name="user_id" style="width:100%">
                 </div>
                 <div style="margin-bottom:20px">
-                    <input  id="borrow_select_user_name" class="easyui-textbox" style="width:100%"
+                    <input id="borrow_select_user_name" class="easyui-textbox" style="width:100%"
                            data-options="label:'借阅人姓名:',required:true,disabled:true">
                 </div>
                 <div style="margin-bottom:20px">
-                    <input id="borrow_select_user_borrow_date" class="easyui-textbox dt" name="borrow_date" style="width:100%"
+                    <input id="borrow_select_user_borrow_date" class="easyui-textbox dt" name="borrow_date"
+                           style="width:100%"
                            data-options="label:'借阅日期:',required:true,editable:false,disabled:true">
                 </div>
                 <div style="margin-bottom:20px">
-                    <input id="borrow_select_user_return_date" class="easyui-textbox dt" name="deadline" style="width:100%"
+                    <input id="borrow_select_user_return_date" class="easyui-textbox dt" name="deadline"
+                           style="width:100%"
                            data-options="label:'应归还日期:',required:true,editable:false,disabled:true">
                 </div>
                 <div style="margin-bottom:20px">
@@ -57,11 +64,11 @@
 <script>
     $(function () {
         $('#borrow_select_user_code').textbox({
-            label:'借阅人编号:',
-            required:true,
-            editable:false,
-            buttonText:'选择',
-            buttonIcon:'icon-search',
+            label: '借阅人编号:',
+            required: true,
+            editable: false,
+            buttonText: '选择',
+            buttonIcon: 'icon-search',
             onClickButton: function () {
                 var _this = this;
                 selectUser(function (data) {
@@ -71,20 +78,20 @@
                     var period = data[0].period;
                     $(_this).textbox('setValue', id);
                     $(_this).textbox('setText', code);
-                    $('#borrow_select_user_name').textbox('setText',name);
-                    $('#borrow_select_user_period').textbox('setText',period);
+                    $('#borrow_select_user_name').textbox('setText', name);
+                    $('#borrow_select_user_period').textbox('setText', period);
                     var date = new Date();
-                    var deadline = period?new Date(date.getTime()+period*1000*60*60*24):null;
-                    $('#borrow_select_user_borrow_date').datebox('setValue',date);
-                    $('#borrow_select_user_return_date').datebox('setValue',deadline);
+                    var deadline = period ? new Date(date.getTime() + period * 1000 * 60 * 60 * 24) : null;
+                    $('#borrow_select_user_borrow_date').datebox('setValue', date);
+                    $('#borrow_select_user_return_date').datebox('setValue', deadline);
 
                 });
             }
         });
         function selectUser(callback) {
             var $doc = $(document);
-            var height = screen.availHeight*0.5, width = screen.availWidth*0.3;
-            var $div = $('<div/>',{height:height,width:width});
+            var height = screen.availHeight * 0.5, width = screen.availWidth * 0.3;
+            var $div = $('<div/>', {height: height, width: width});
             $div.dialog({
                 title: '请选择',
                 closed: false,
@@ -112,22 +119,27 @@
                 }]
             });
         }
+
         $('.dt').datetimebox({
             showSeconds: false,
         });
-        $('#borrow_dialog_dg').datagrid({
+        $('#borrow_dlg_dg').datagrid({
+            height: 270,
             fitColumns: true,
             singleSelect: true,
             columns: [[
                 {field: 'ck', checkbox: true},
                 {field: 'id', title: 'ID', hidden: true},
                 {field: 'code', title: '图书编号'},
-                {field: 'name', title: '图书名称'},
-                {field:'null',title:'操作',formatter:function (val,row) {
+                {field: 'name', title: '图书名称', width: 190},
+                {
+                    field: 'null', title: '操作', formatter: function (val, row) {
                     return "<a href='javascript:void(0);' onclick='javascript:$.borrow.removeCurrentRow(this)'>删除</a>";
-                }}
+                }
+                }
             ]]
         });
+
         $('#borrow_dg').datagrid({
             url: '/books/list',
             method: 'get',
@@ -136,31 +148,41 @@
             singleSelect: false,
             pagination: true,
             pageSize: 10,
-            rownumbers:true,
+            rownumbers: true,
             toolbar: [{
                 text: '加入借阅库',
                 handler: function () {
+                    debugger;
                     var rows = $('#borrow_dg').datagrid('getChecked');
                     if (!rows || !rows.length) {
                         $.messager.alert('提示', '请选择要加入的行!');
                         return;
                     }
-                    var occupied = $.grep(rows,function (row) {
-                        return {BORROWED:true,MISSED:false}[row.STATUS];
+                    //检测是否勾选已借出或者损毁状态的图书
+                    var occupied = $.grep(rows, function (row) {
+                        return {BORROWED: true, MISSED: false}[row.STATUS];
                     });
-                    if(occupied&&occupied.length){
-                        var msg = $.map(occupied,function (item) {
+                    if (occupied && occupied.length) {
+                        var msg = $.map(occupied, function (item) {
                             return item.name;
                         });
-                        $.messager.alert('提示','以下图书处于借出或损毁状态,不可借阅:<br><br>&nbsp;&nbsp;&nbsp;&nbsp;'+msg.join(','));
+                        $.messager.alert('提示', '以下图书处于借出或损毁状态,不可借阅:<br><br>&nbsp;&nbsp;&nbsp;&nbsp;' + msg.join(','));
                         return;
                     }
-
-                    var cache = $('#borrow_dg').data('cache')||[];
-                    //concat是连接的意思
-                    cache = cache.concat(rows);
-                    $('#borrow_dg').data('cache',cache);
-
+                    //检测是否重复加入
+                    var $dg_list = $('#borrow_dlg_dg');
+                    var selected = $dg_list.datagrid('getRows');
+                    var toBeAdded = [];
+                    var ids = $.map(selected, function (row) {
+                        return row.id;
+                    });
+                    for (var i = 0; i < rows.length; i++) {
+                        if ($.inArray(rows[i].id, ids) > -1) {
+                            $.messager.alert('提示', rows[i].name + '已加入借阅列表!');
+                        } else {
+                            $('#borrow_dlg_dg').datagrid('appendRow', rows[i]);
+                        }
+                    }
                 }
             }, {
                 text: '查看借阅库',
@@ -176,33 +198,33 @@
                 {field: 'author', title: '作者'},
                 {field: 'translator', title: '译者'},
                 {field: 'publisher', title: '出版社'},
-                {field: 'date', title: '出版日期',formatter:function (val,row) {
-                    return val?$.formatDate(new Date(val),'yyyy-MM-dd'):null;
-                }},
+                {
+                    field: 'date', title: '出版日期', formatter: function (val, row) {
+                    return val ? $.formatDate(new Date(val), 'yyyy-MM-dd') : null;
+                }
+                },
                 {field: 'price', title: '价格'},
                 {
                     field: 'STATUS', title: '状态', formatter: function (val, row) {
-                    return row.missed?'损毁遗失':{RETURNED: '在库', BORROWED: '借出', MISSED: '损毁遗失'}[val||'RETURNED'];
+                    return row.missed ? '损毁遗失' : {RETURNED: '在库', BORROWED: '借出', MISSED: '损毁遗失'}[val || 'RETURNED'];
                 }
                 },
                 {
-                    field: 'user.name', title: '借阅人', formatter: function (val, row) {
-                    return row.user ? row.user.name : '';
-                }
+                    field: 'uname', title: '借阅人'
                 },
                 {
                     field: 'borrow_date', title: '借阅日期', formatter: function (val, row) {
-                    return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+                    return val ? $.formatDate(val, 'yyyy-MM-dd hh:mm') : '';
                 }
                 },
                 {
                     field: 'deadline', title: '应归还日期', formatter: function (val, row) {
-                    return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+                    return val ? $.formatDate(val, 'yyyy-MM-dd hh:mm') : '';
                 }
                 },
                 {
                     field: 'return_date', title: '实际归还日期', formatter: function (val, row) {
-                    return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+                    return val ? $.formatDate(val, 'yyyy-MM-dd hh:mm') : '';
                 }
                 },
                 {
@@ -262,45 +284,46 @@
 
         function showCacheDialog(data) {
             var rows = $('#borrow_dg').data('cache');
-            if(rows&&rows.length){
+            if (rows && rows.length) {
                 var $dlg = $('#borrow_dlg_cache');
-                $dlg.find('#borrow_dialog_dg').datagrid('loadData',{rows:rows});
+                $dlg.find('#borrow_dlg_dg').datagrid('loadData', {rows: rows});
                 $('#borrow_dlg_cache').dialog('open');
-            }else{
-                $.messager.alert('提示','借阅库没有数据!');
+            } else {
+                $.messager.alert('提示', '借阅库没有数据!');
             }
 
         }
+
         function removeCurrentRow(target) {
             var $this = $(target);
             var index = $this.parents('.datagrid-row').first().attr('datagrid-row-index')
             var $dg = $this.parents('.datagrid-view').first().find('.datagrid-f');
-            $dg.datagrid('deleteRow',index);
+            $dg.datagrid('deleteRow', index);
             var rows = $dg.datagrid('getRows');
-            if(!rows||rows.length<1){
+            if (!rows || rows.length < 1) {
                 $.messager.show({
-                    title:'提示',
-                    msg:'请选择要借阅的书目!',
-                    timeout:1500,
-                    showType:'fade'
+                    title: '提示',
+                    msg: '请选择要借阅的书目!',
+                    timeout: 1500,
+                    showType: 'fade'
                 });
-                $('#borrow_dlg_cache').dialog('close');
-            }else{
-                $dg.datagrid('loadData',{rows:rows});
+            } else {
+                $dg.datagrid('loadData', {rows: rows});
             }
         }
+
         function submitForm() {
             var user_id = $('#borrow_select_user_code').textbox('getValue');
-            var books = $('#borrow_dg').data('cache');
-            if(!user_id){
-                $.messager.alert('提示','请选择借书人!');
+            var books = $('#borrow_dlg_dg').datagrid('getRows');
+            if (!user_id) {
+                $.messager.alert('提示', '请选择借书人!');
                 return;
             }
-            if(!books||books.length<1){
-                $.messager.alert('提示','请选择借阅的书目!');
+            if (!books || books.length < 1) {
+                $.messager.alert('提示', '请选择借阅的书目!');
                 return;
             }
-            var book_ids = $.map(books,function (book) {
+            var book_ids = $.map(books, function (book) {
                 return book.id;
             });
 //            $.messager.progress({title:'数据保存中,请稍后...'});
@@ -310,18 +333,18 @@
 //                return;
 //            }
             $.ajax({
-                url:'borrow/action',
-                type:'post',
-                dataType:'json',
-                data:{
-                    user_id:user_id,
-                    book_ids:book_ids
+                url: 'borrow/action',
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    user_id: user_id,
+                    book_ids: book_ids
                 }
             }).done(function (ret) {
                 if (ret.flag) {
                     $.messager.alert('提示', '保存成功!');
                     $('#borrow_dg').datagrid('reload');
-                    $('#borrow_dlg_cache').dialog('close');
+                    clearEditDialog();
                 } else {
                     $.messager.alert('提示', ret.msg || '保存失败,请检查网络连接或者权限!');
                 }
@@ -333,22 +356,24 @@
 
         }
 
-        function closeEditDialog() {
-            $('#borrow_dlg_cache').dialog('close');
+        function clearEditDialog() {
+            var $dlg = $('#borrow_dlg_cache');
+            $dlg.find('.datagrid-f').datagrid('loadData', {total: 0, rows: []});
+            $dlg.find('form').form('clear');
         }
 
         function removeCache(obj) {
             var rows = $('#borrow_dg').data('cache');
-            if(rows&&row.length){
-                rows = $.filter(rows,function (i,row) {
-                    return row.id!=obj.id;
+            if (rows && row.length) {
+                rows = $.filter(rows, function (i, row) {
+                    return row.id != obj.id;
                 });
-                $('#borrow_dg').data('cache',rows);
+                $('#borrow_dg').data('cache', rows);
             }
 
         }
 
-        function remove(ids,callback) {
+        function remove(ids, callback) {
             $.ajax({
                 url: '/books/delete',//TODO url
                 data: {ids: ids},
@@ -366,11 +391,12 @@
                 $.messager.progress('close');
             });
         }
+
         $.extend({
             borrow: {
                 submitForm: submitForm,
-                closeEditDialog: closeEditDialog,
-                removeCurrentRow:removeCurrentRow
+                clearEditDialog: clearEditDialog,
+                removeCurrentRow: removeCurrentRow
             }
         });
     });

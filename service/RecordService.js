@@ -138,6 +138,7 @@ SELECT * FROM
 			r.return_date,
 			r.deadline,
 			r.STATUS,
+			r.updatedAt,
 			u.id uid,
 			u. NAME uname,
 			b.id bid,
@@ -152,7 +153,8 @@ WHERE
 	(t.uname LIKE :name or t.bname LIKE :name)
 	and
 	STATUS in (:status)
-
+    order by updatedAt desc
+    limit :page,:rows
 `;
 // limit :page,:rows
 function query(params, callback) {
@@ -169,8 +171,8 @@ function query(params, callback) {
             replacements: {
                 name:'%'+(params.name||'')+'%',
                 status: params.status||['BORROWED','RETURNED','OVERDUE','MISSED'],
-                // page:page>0?page-1:0,
-                // rows:rows
+                page:page>0?page-1:0,
+                rows:rows
             }, type: seq.QueryTypes.SELECT
         }
     ).then(function (l) {
@@ -214,15 +216,6 @@ function queryRecordsByUserId(uid,callback) {
         callback({total:l.length,rows:l});
     });
 }
-
-// Record.create({bookId:1}).then(function (ret) {
-//     console.log(ret);
-// })
-
-
-// query({page:1,rows:10},function (ret) {
-//     console.log(ret);
-// })
 module.exports = {
     markBorrowed: markBorrowed,
     markReturned: markReturned,

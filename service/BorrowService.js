@@ -43,45 +43,35 @@ function borrow(user_id, period, book_ids, callback) {
  * @param bookname 图书名
  * @param callback
  */
-function query(username, bookname, callback) {
-    var user_where = {deleted: false},
-        book_where = {deleted: false};
+const sql_query_records =`
+select * from record_books
+where (name like :name or uname like :name) limit :page,:rows order by updatedAt desc
+`,
+    sql_query_records_count = `
+select count(*) c from record_books
+where (name like :name or uname like :name)
+`
+function query(params, callback) {
+    var record_where = {deleted: false};
     if (username) {
-        var username_like = ['%', decodeURIComponent(username), '%'].join('');
-        user_where.$or = {
-            name: {
-                $like: username_like
-            },
-            code: {
-                $like: username_like
-            }
-        }
+        record_where.name =['%', params.name, '%'].join('');
     }
-    if (bookname) {
-        var bookname_like = ['%', decodeURIComponent(bookname), '%'].join('');
-        book_where.$or = {
-            name: {
-                $like: bookname_like
-            },
-            code: {
-                $like: bookname_like
-            }
+    seq.query(sql_query_records_count,{
+        replacements:record_where
+    }).then(function (count) {
+        return count.length?count[0].c:0;
+    }).then(function (c) {
+        if(c){
+            var page = parseInt(params.page);
+            var rows = parseInt(params.rows);
+            record_where.page = page>0?page-1:0;
+            record_where.rows = rows>0?rows:10;
+            seq.query(sql_query_records,{replacements:record_where}).then(function (records) {
+                callback({total:c,rows:records});
+            })
+        }else{
+            callback();
         }
-    }
-    user_where.id = Seq.col('record.userId');
-    book_where.id = Seq.col('record.bookId');
-    Record.findAndCountAll({
-        include: [{
-            model: User,
-            where: user_where
-        }, {
-            model: Book,
-            where: book_where
-        }]
-    }).then(function (result) {
-        result.total = result.count;
-        delete result.count;
-        callback(result);
     });
 }
 
@@ -109,7 +99,10 @@ function list(name,callback) {
             model: Book,
             where: book_where,
             required: false
-        }]
+        }],
+        order: [
+            ['updatedAt', 'desc']
+        ]
     }).then(function (result) {
         result.total = result.count;
         delete result.count;

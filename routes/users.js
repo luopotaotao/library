@@ -111,12 +111,13 @@ router
                     item['name'] || '',
                     {M: '男', F: '女'}[item['gender']] || '',
                     item['birth'] ? dateUtil.format(item['birth'], 'yyyy/MM/dd') : '',
+                    item['period'] || '',
+                    item['role'] || '',
                     item['phone'] || '',
-                    item['email'] || '',
-                    item['phone'] || ''
+                    item['email'] || ''
                 ];
             });
-            rows.unshift(['姓名', '性别', '出生日期', '借阅周期', '角色', '电话', '邮箱']);
+            rows.unshift(['工号','姓名', '性别', '出生日期', '借阅周期', '角色', '电话', '邮箱']);
             var date = dateUtil.format(new Date(), 'yyyy年MM月dd日hh时mm分鸿合用户信息') + '.xlsx';
             var buffer = excelUtil.generateXlsx('sheet1', rows);
             responseUtil.setXlsxResponseHeaders(res, encodeURIComponent(date));
@@ -179,6 +180,26 @@ router
             }
 
         });
+    })
+    .post('/resetPassword',function (req,res,next) {
+        var params = req.body;
+        var id = req.session.user.id;
+        if(id&&params.password&&params.new_password){
+            userService.resetPassword(id,params.password,params.new_password,function (ret) {
+                if(ret.flag==false&&ret.msg){
+                    res.json(ret);
+                    return;
+                }
+                if(ret){
+                    console.log(ret);
+                    res.json({flag:true,msg:'密码更新成功!'});
+                }else{
+                    res.json({flag:false,msg:'密码更新失败!'});
+                }
+            })
+        }else{
+            res.json({flag:false,msg:'信息不完整!'});
+        }
     })
 
 

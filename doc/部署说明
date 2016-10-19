@@ -1,0 +1,5 @@
+1.需要修改express库来解决ie下载json的问题
+    node_modules\express\lib\response.js 第246行改为
+        this.set('Content-Type', 'text/plain; charset=utf-8');
+2.执行当前目录下的sql脚本
+3.启动服务器

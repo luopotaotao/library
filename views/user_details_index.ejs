@@ -24,7 +24,7 @@
             </div>
             <div style="margin-bottom:20px">
                 <a href="#" class="easyui-linkbutton" data-options="plain:false"
-                   onclick="$('#password_edit').dialog('open')"
+                   onclick="$('#password_dlg').dialog('open')"
                    style="padding: 3px 10px;margin-top: 10px;">修改密码</a>
             </div>
         </form>
@@ -50,7 +50,7 @@
         </form>
     </div>
 </div>
-<div id="password_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;display: none"
+<div id="password_dlg" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;display: none"
      data-options="
         title: '修改密码',
         closed: true,
@@ -59,26 +59,27 @@
         buttons: [{
             text: '确认',
             iconCls: 'icon-ok',
-            handler: $.password_edit.submitForm
+            handler: $.password.resetPassword
             }, {
             text: '取消',
             iconCls: 'icon-cancel',
-            handler: $.password_edit.closeEditDialog
+            handler: $.password.closeEditDialog
             }]
         ">
-    <form id="password_ff" class="easyui-form" method="post" data-options="novalidate:true">
+    <form id="password_ff" class="easyui-form" action="users/resetPassword" method="post"
+          data-options="novalidate:true">
         <div style="margin-bottom:20px">
-            <input class="easyui-textbox" name="name" style="width:100%"
+            <input id="password_ff_input_password" class="easyui-textbox" name="password" style="width:100%"
                    data-options="label:'原始密码:',required:true">
         </div>
         <div style="margin-bottom:20px">
-            <input class="easyui-textbox" name="code" style="width:100%"
+            <input id="password_ff_input_new_password" class="easyui-textbox" name="new_password" style="width:100%"
                    data-options="label:'新密码:',required:true" validType="length[4,32]" id="password" type="password">
         </div>
         <div style="margin-bottom:20px">
-            <input class="easyui-textbox" name="role" style="width:100%"
+            <input id="password_ff_input_repeat_password" class="easyui-textbox" name="role" style="width:100%"
                    data-options="label:'确认密码:',required:true" id="repassword" type="password"
-                   validType="equalTo['#password']" invalidMessage="两次输入密码不匹配">
+                   validType="equalTo['#password_ff_input_new_password']" invalidMessage="两次输入密码不匹配">
         </div>
     </form>
 </div>
@@ -106,6 +107,7 @@
         </thead>
     </table>
 </div>
+<script type="text/javascript" src="/javascripts/sha1.js"></script>
 <script type="text/javascript">
     $(function () {
         loadStatistic();
@@ -119,6 +121,7 @@
                 $('#users_statistic_ff').form('load', ret);
             });
         }
+
         function loadUserInfo() {
             $.ajax({
                 url: 'users/user_details/user_info',
@@ -128,5 +131,48 @@
                 $('#users_user_info_ff').form('load', ret);
             });
         }
+
+        function resetPassword() {
+            $.messager.progress({title: '数据保存中,请稍后...'});	// display the progress bar
+            var isValid = $('#password_ff').form('enableValidation').form('validate');
+            if (!isValid) {
+                $.messager.progress('close');	// hide progress bar while the form is invalid
+                return;
+            }
+
+            var $password_input = $('#password_ff_input_password'),
+                    $new_password_input = $('#password_ff_input_new_password'),
+                    password = hex_sha1($password_input.val()),
+                    new_password = hex_sha1($new_password_input.val());
+            $.ajax({
+                url: 'users/resetPassword',
+                type: 'post',
+                dataType: 'json',
+                data: {password: password, new_password: new_password}
+            }).done(function (ret) {
+                if (ret && ret.flag) {
+                    $.messager.alert('提示', ret.msg || '更新成功!');
+                    closeEditDialog();
+                } else {
+                    $.messager.alert('提示', ret.msg || '更新失败!');
+                }
+            }).fail(function () {
+                $.messager.alert('提示', ret.msg || '更新失败!');
+            }).always(function () {
+                $.messager.progress('close');
+            });
+        }
+
+        function closeEditDialog() {
+            $('#password_ff').form('clear');
+            $('#password_dlg').dialog('close');
+        }
+
+        $.extend({
+            password: {
+                resetPassword: resetPassword,
+                closeEditDialog: closeEditDialog
+            }
+        })
     });
 </script>

@@ -63,10 +63,7 @@
             columns: [[
                 {field: 'id', title: 'ID', hidden: true},
                 {field: 'code', title: '编号'},
-                {field: 'name', title: '名称',formatter: function(value,row,index){
-                    return "<a href='#' class='easyui-linkbutton' data-options='plain:false' onclick=\"$('#books_query_dlg_edit').dialog('open')\">"+value+"</a>"
-
-                }  	},
+                {field: 'name', title: '名称'	},
                 {field: 'author', title: '作者'},
                 {field: 'translator', title: '译者'},
                 {field: 'publisher', title: '出版社'},

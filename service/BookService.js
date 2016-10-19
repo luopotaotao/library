@@ -37,14 +37,6 @@ function remove(book, callback, errorHandler) {
         errorHandler({msg: 'wrong params'});
         return;
     }
-    /*
-     Book.destroy({
-     where: {
-     id:{
-     $in: ids
-     }
-     }
-     })*/
     Book.update({deleted: true}, {
         fields: ['deleted'],
         where: {
@@ -113,7 +105,7 @@ WHERE
 	and ( name like :name or code like :name)
 	and (recordId is null or status in(:status))
 ORDER BY
-	NAME ASC
+    updatedAt desc
 LIMIT :page,:rows;
 `;
 
@@ -154,9 +146,6 @@ function query(params, callback) {
             status: params.status||['BORROWED','RETURNED','OVERDUE','MISSED'],
         }, type: seq.QueryTypes.SELECT
     }).then(function (ret) {
-        if(ret&&ret.c){
-
-        }
         return ret.length?ret[0].c:null;
     }).then(function (c) {
         if(c){
@@ -239,7 +228,9 @@ function queryByIds(ids, callback) {
 
     Book.findAndCountAll({
         where: where,
-        order: 'name asc'
+        order: [
+            ['updatedAt', 'desc']
+        ]
     }).then(function (result) {
         console.log(result.count);
         console.log(result.rows);
