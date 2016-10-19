@@ -103,7 +103,7 @@ FROM
 WHERE
 	book_record.deleted = FALSE
 	and ( name like :name or code like :name)
-	and (recordId is null or status in(:status))
+	and  status in(:status)
 ORDER BY
     updatedAt desc
 LIMIT :page,:rows;
@@ -116,7 +116,7 @@ FROM
 WHERE
 	book_record.deleted = FALSE
 	and ( name like :name or code like :name)
-	and (recordId is null or status in(:status))
+	and status in(:status)
 `;
 function query(params, callback) {
     if (!util.isObject(params)) {
@@ -133,8 +133,6 @@ function query(params, callback) {
         };
     if (params.name) {
         where.name = {$like: ['%', params.name, '%'].join('')};
-    }
-    if (params.code) {
         where.code = {$like: ['%', params.code, '%'].join('')};
     }
     if (params.status) {
@@ -143,7 +141,7 @@ function query(params, callback) {
     seq.query(sql_query_books_count,{
         replacements: {
             name:['%', params.name, '%'].join(''),
-            status: params.status||['BORROWED','RETURNED','OVERDUE','MISSED'],
+            status: params.status?[params.status]:['BORROWED','RETURNED','OVERDUE','MISSED'],
         }, type: seq.QueryTypes.SELECT
     }).then(function (ret) {
         return ret.length?ret[0].c:null;

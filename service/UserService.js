@@ -117,7 +117,7 @@ function query(params, callback) {
     }
     var page = params.hasOwnProperty('page') ? parseInt(params.page) : 1,
         rows = params.hasOwnProperty('rows') ? parseInt(params.rows) : 10,
-        where = {deleted: false,id:{$gt:0}};
+        where = {deleted: false,id:{$gt:1}};
     if (params.name) {
         where.$or = {
             name: {
