@@ -4,6 +4,7 @@
 var express = require('express');
 var util = require('util');
 var borrowService = require('../service/BorrowService')
+var recordService = require('../service/RecordService')
 var router = express.Router();
 
 
@@ -14,9 +15,13 @@ router
     .get('/list', function (req, res, next) {
         var username = req.query.username,
             bookname = req.query.bookname;
-        borrowService.query(username, bookname, function (result) {
+        recordService.query({name:username||bookname}, function (result) {
             res.json(result);
         });
-    });
+    }).get('/selfRecords',function (req,res,next) {
+        recordService.queryRecordsByUserId(req.session.user.id,function (ret) {
+            res.json(ret);
+        })
+});
 
 module.exports = router;

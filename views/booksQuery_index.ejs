@@ -75,8 +75,8 @@
                 }},
                 {field: 'price', title: '价格'},
                 {
-                    field: 'status', title: '状态', formatter: function (val, row) {
-                    return {IN: '在库', OUT: '借出', MISSED: '损毁遗失'}[val];
+                    field: 'STATUS', title: '状态', formatter: function (val, row) {
+                    return {RETURNED:'在库',OVERDUE:'借出(超期)',MISSED:'损毁遗失',BORROWED:'借出'}[val]||'在库';
                 }
                 }
             ]],

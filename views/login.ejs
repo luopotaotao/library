@@ -65,7 +65,6 @@
         $('#ff').form('submit', {
             onSubmit: function () {
                 var isValid = $(this).form('enableValidation').form('validate');
-                debugger;
                 if(isValid){
                     var $password = $(this).find('input[name="password"]');
                     var text = $password.val();

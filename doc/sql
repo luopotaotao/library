@@ -1,0 +1,17 @@
+
+delimiter |
+create trigger update_book_insert AFTER insert on records  for each row
+begin
+	update books set recordId = NEW.id;
+end;
+|
+create trigger update_book_update before update on records  for each row
+begin
+	update books set recordId = null WHERE id=NEW.bookId;
+	IF NEW.STATUS ='MISSED' THEN
+           update books set missed = true WHERE id=NEW.bookId;
+	END IF ;
+end;
+|
+
+delimiter ;

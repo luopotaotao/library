@@ -180,8 +180,8 @@
                 }},
                 {field: 'price', title: '价格'},
                 {
-                    field: 'status', title: '状态', formatter: function (val, row) {
-                    return {RETURNED: '在库', BORROWED: '借出', MISSED: '损毁遗失'}[val];
+                    field: 'STATUS', title: '状态', formatter: function (val, row) {
+                    return row.missed?'损毁遗失':{RETURNED: '在库', BORROWED: '借出', MISSED: '损毁遗失'}[val||'RETURNED'];
                 }
                 }
             ]],

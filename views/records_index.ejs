@@ -20,19 +20,13 @@
             columns: [[
                 {field: 'id', title: 'ID', hidden: true},
                 {
-                    field: 'book.code', title: '图书编号', formatter: function (val, row) {
-                    return row.book ? row.book.code : '';
-                }
+                    field: 'bcode', title: '图书编号'
                 },
                 {
-                    field: 'book.name', title: '图书名称', formatter: function (val, row) {
-                    return row.book ? row.book.name : '';
-                }
+                    field: 'bname', title: '图书名称'
                 },
                 {
-                    field: 'user.name', title: '借阅人', formatter: function (val, row) {
-                    return row.user ? row.user.name : '';
-                }
+                    field: 'uname', title: '借阅人'
                 },
                 {
                     field: 'borrow_date', title: '借阅日期', formatter: function (val, row) {

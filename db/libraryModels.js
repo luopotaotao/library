@@ -28,24 +28,42 @@ var Book = seq.define('book', {
     publisher: Seq.STRING,
     date: Seq.DATE,
     price: Seq.DECIMAL(18, 2),
-    status: {type:Seq.ENUM('BORROWED', 'RETURNED', 'MISSED', 'OVERDUE'),defaultValue:'RETURNED'},
-    borrow_date: Seq.DATE,
+    missed:{type: Seq.BOOLEAN, defaultValue: false},
     deleted: {type: Seq.BOOLEAN, defaultValue: false}
+});
+var BookRecord = seq.define('book_record', {
+    code: Seq.STRING,
+    name: Seq.STRING,
+    author: Seq.STRING,
+    translator: Seq.STRING,
+    publisher: Seq.STRING,
+    date: Seq.DATE,
+    price: Seq.DECIMAL(18, 2),
+    missed:{type: Seq.BOOLEAN, defaultValue: false},
+    deleted: {type: Seq.BOOLEAN, defaultValue: false},
+    recordId:Seq.INTEGER,
+    borrow_date: Seq.DATE,
+    deadline: Seq.DATE,
+    return_date: Seq.DATE,
+    status: {type:Seq.ENUM('BORROWED', 'RETURNED', 'MISSED', 'OVERDUE'),defaultValue:'BORROWED'}
 });
 var Record = seq.define('record', {
     code: Seq.STRING,
     borrow_date: Seq.DATE,
     deadline: Seq.DATE,
     return_date: Seq.DATE,
-    return_status: Seq.ENUM('BORROWED', 'RETURNED', 'MISSED', 'OVERDUE'),
+    status: {type:Seq.ENUM('BORROWED', 'RETURNED', 'MISSED', 'OVERDUE'),defaultValue:'BORROWED'},
     deleted: {type: Seq.BOOLEAN, defaultValue: false}
 });
 
 User.hasMany(Record);
-Record.belongsTo(User);
+Record.belongsTo(User); //
 Book.hasMany(Record);
 Record.belongsTo(Book);
-Book.belongsTo(User);
+
+// Book.belongsTo(Record);
+// Record.hasOne(Book);
+
 const CONST_USER_ROLE = {
         SUPER: 'SUPER',
         ADMIN: 'ADMIN',
@@ -62,6 +80,7 @@ module.exports = {
     User: User,
     Book: Book,
     Record: Record,
+    BookRecord:BookRecord,
     seq: seq,
     Seq: Seq,
     CONST_USER_ROLE:CONST_USER_ROLE,

@@ -50,7 +50,7 @@
         </form>
     </div>
 </div>
-<div id="password_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;"
+<div id="password_edit" class="easyui-dialog" style="width:100%;max-width:400px;padding:30px 60px;display: none"
      data-options="
         title: '修改密码',
         closed: true,
@@ -85,17 +85,24 @@
 
 <div class="easyui-panel" title="我的借阅记录列表">
     <table id="personal_information_dialog_dg" class="easyui-datagrid" style="width: 100%" rownumbers="true"
-           data-options="
-        href:''
-    ">
+           data-options="url:'records/selfRecords',method:'get'">
         <thead>
         <th data-options="field: 'id', title: 'ID', hidden: true"></th>
-        <th data-options="field: 'code', title: '图书编号'"></th>
-        <th data-options="field: 'name', title: '图书名称'"></th>
-        <th data-options="field: 'borrow_date', title: '借阅日期'"></th>
-        <th data-options="field: 'deadline', title: '应归还日期'"></th>
-        <th data-options="field: 'return_date', title: '实际归还日期'"></th>
+        <th data-options="field: 'bcode', title: '图书编号'"></th>
+        <th data-options="field: 'bname', title: '图书名称'"></th>
+        <th data-options="field: 'borrow_date', title: '借阅日期', formatter: function (val, row) {
+        return val ? $.formatDate(val,'yyyy-MM-dd') : '';
+        }"></th>
+        <th data-options="field: 'deadline', title: '应归还日期', formatter: function (val, row) {
+        return val ? $.formatDate(val,'yyyy-MM-dd') : '';
+        }"></th>
+        <th data-options="field: 'return_date', title: '实际归还日期', formatter: function (val, row) {
+        return val ? $.formatDate(val,'yyyy-MM-dd') : '';
+        }"></th>
         <th data-options="field: 'late_days', title: '逾期天数'"></th>
+        <th data-options="field: 'STATUS', title: '状态',formatter:function(value,row){
+							return {RETURNED:'已归还',OVERDUE:'超期',MISSED:'损毁遗失',BORROWED:'未归还'}[value]||null;
+						}"></th>
         </thead>
     </table>
 </div>

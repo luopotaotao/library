@@ -29,9 +29,9 @@
         <thead>
         <th data-options="field: 'ck', checkbox: true"></th>
         <th data-options="field: 'id', title: 'ID', hidden: true"></th>
-        <th data-options="field: 'code', title: '图书编号'"></th>
-        <th data-options="field: 'name', title: '图书名称'"></th>
-        <th data-options="field: 'user', title: '借阅人',formatter:function(val){return val.name;}"></th>
+        <th data-options="field: 'bcode', title: '图书编号'"></th>
+        <th data-options="field: 'bname', title: '图书名称'"></th>
+        <th data-options="field: 'uname', title: '借阅人'"></th>
         <th data-options="field: 'borrow_date', title: '借阅日期', formatter: function (val, row) {
         return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
         }"></th>
@@ -42,10 +42,10 @@
         return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
         }"></th>
         <th data-options="field: 'delay', title: '逾期天数', formatter: function (val, row) {
-         return val>0?val:'';
+         return val>0?val:'未逾期';
         }"></th>
         <th data-options="field: 'status', title: '状态',width:80,formatter:function(value,row){
-							return {RETURNED:'归还',OVERDUE:'超期',MISSED:'损毁遗失'}[value]||null;
+							return {RETURNED:'归还',OVERDUE:'超期',MISSED:'损毁遗失',BORROWED:'借出'}[value];
 						},
 						editor:{
 							type:'combobox',
@@ -83,48 +83,50 @@
             fitColumns: true,
             singleSelect: false,
             pagination: true,
-            pageSize: 10,
+//            pageSize: 10,
             columns: [[
                 {field: 'ck', checkbox: true},
                 {field: 'id', title: 'ID', hidden: true},
-                {field: 'code', title: '图书编号'},
-                {field: 'name', title: '图书名称'},
+                {field: 'bcode', title: '图书编号'},
                 {
-                    field: 'user', title: '借阅人', formatter: function (val, row) {
-                    return val?val.name: '';
-                }
+                    field: 'bname', title: '图书名称'
+                },
+                {
+                    field: 'uname', title: '借阅人'
                 },
                 {
                     field: 'borrow_date', title: '借阅日期', formatter: function (val, row) {
-                    return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
+                    return val ? $.formatDate(val, 'yyyy-MM-dd hh:mm') : '';
                 }
                 },
                 {
                     field: 'deadline', title: '应归还日期', formatter: function (val, row) {
-                    return $.formatDate(val,'yyyy-MM-dd hh:mm')
+                    return $.formatDate(val, 'yyyy-MM-dd hh:mm')
                 }
                 },
                 {
-                    field: 'delay', title: '逾期天数',formatter:function (val,row) {
-                    return val>0?'<p style="color: red;">'+val+'</p>':'<p style="color: green;">'+(-val)+'</p>';
+                    field: 'delay', title: '状态', formatter: function (val, row) {
+                    return val > 0 ? '<p style="color: red;">逾期 ' + val + '天</p>' : '<p style="color: green;">剩余' + (-val) + '天</p>';
                 }
                 }
             ]],
-            loadFilter: function(data){
-                if (data.rows){
-                    var a_day = 1000*60*60*24;
+            loadFilter: function (data) {
+                if (data.rows) {
+                    var a_day = 1000 * 60 * 60 * 24;
                     var current = new Date();
-                    $.each(data.rows,function (i,row) {
-                        //计算应还日期
-                        if(row.borrow_date&&row.user&&row.user.period){
-                            var deadline = new Date((new Date(row.borrow_date))+a_day*row.user.period);
-                            row.deadline = deadline;
+                    $.each(data.rows, function (i, row) {
+                        if (row.borrow_date) {
+                            row.borrow_date = new Date(row.borrow_date);
                         }
-                        //计算图书状态以及超期天数
-                        if(row.deadline<current){
+                        if (row.deadline) {
+                            row.deadline = new Date(row.deadline);
+                        }
+                        if (row.deadline < current) {
                             row.status = 'OVERDUE';
                         }
-                        row.delay = Math.round((current-row.deadline)/a_day);
+                        if(row.deadline){
+                            row.delay = Math.ceil((current.getTime() - row.deadline.getTime()) / a_day);
+                        }
 
                     });
                 }
@@ -135,13 +137,13 @@
 
         function doReturn() {
             var rows = $('#return_dialog_dg').datagrid('getRows');
-            if(!rows||rows.length<1){
-                $.messager.alert('提示','请勾选要归还的数目!');
+            if (!rows || rows.length < 1) {
+                $.messager.alert('提示', '请勾选要归还的数目!');
                 return;
             }
             $.messager.progress({title: '数据保存中,请稍后...'});
             var return_set = {};
-            $.each(rows,function (i,row) {
+            $.each(rows, function (i, row) {
                 return_set[row.id] = row['status'];
             });
             $.ajax({
@@ -149,7 +151,7 @@
                 data: return_set,
                 type: 'post',
                 dataType: 'json',
-                data:return_set
+                data: return_set
             }).done(function (ret) {
                 if (ret && ret.flag) {
                     $.messager.alert('提示', '归还成功!');
@@ -171,20 +173,20 @@
 
         function showReturnDialog() {
             var rows = $('#return_dg').datagrid('getChecked');
-            if(rows&&rows.length){
+            if (rows && rows.length) {
                 var $dlg = $('#return_dlg_confirm');
                 $dlg.dialog('open');
                 var date = new Date();
-                $.each(rows,function (i,row) {
-                    if(row.status!='OVERDUE'){
+                $.each(rows, function (i, row) {
+                    if (row.status != 'OVERDUE') {
                         row.status = 'RETURNED';
                     }
                     row.return_date = date;
                 });
-                $dlg.find('#return_dialog_dg').datagrid('loadData',{rows:rows});
+                $dlg.find('#return_dialog_dg').datagrid('loadData', {rows: rows});
 
-            }else{
-                $.messager.alert('提示','请勾选要归还的图书');
+            } else {
+                $.messager.alert('提示', '请勾选要归还的图书');
             }
         }
 
@@ -192,64 +194,65 @@
             var $this = $(target);
             var index = $this.parents('.datagrid-row').first().attr('datagrid-row-index')
             var $dg = $this.parents('.datagrid-view').first().find('.datagrid-f');
-            $dg.datagrid('deleteRow',index);
+            $dg.datagrid('deleteRow', index);
             var rows = $dg.datagrid('getRows');
-            if(!rows||rows.length<1){
+            if (!rows || rows.length < 1) {
                 $.messager.show({
-                    title:'提示',
-                    msg:'请选择要归还的书目!',
-                    timeout:1500,
-                    showType:'fade'
+                    title: '提示',
+                    msg: '请选择要归还的书目!',
+                    timeout: 1500,
+                    showType: 'fade'
                 });
                 $('#return_dlg_confirm').dialog('close');
-            }else{
-                $dg.datagrid('loadData',{rows:rows});
+            } else {
+                $dg.datagrid('loadData', {rows: rows});
             }
         }
+
         $.extend({
             ret: {
                 doReturn: doReturn,
                 closeConfirmDialog: closeConfirmDialog,
-                showReturnDialog:showReturnDialog,
-                removeCurrentRow:removeCurrentRow
+                showReturnDialog: showReturnDialog,
+                removeCurrentRow: removeCurrentRow
             }
         });
 
         $.extend($.fn.datagrid.methods, {
-            editCell: function(jq,param){
-                return jq.each(function(){
+            editCell: function (jq, param) {
+                return jq.each(function () {
                     var opts = $(this).datagrid('options');
-                    var fields = $(this).datagrid('getColumnFields',true).concat($(this).datagrid('getColumnFields'));
-                    for(var i=0; i<fields.length; i++){
+                    var fields = $(this).datagrid('getColumnFields', true).concat($(this).datagrid('getColumnFields'));
+                    for (var i = 0; i < fields.length; i++) {
                         var col = $(this).datagrid('getColumnOption', fields[i]);
                         col.editor1 = col.editor;
-                        if (fields[i] != param.field){
+                        if (fields[i] != param.field) {
                             col.editor = null;
                         }
                     }
                     $(this).datagrid('beginEdit', param.index);
                     var ed = $(this).datagrid('getEditor', param);
-                    if (ed){
-                        if ($(ed.target).hasClass('textbox-f')){
+                    if (ed) {
+                        if ($(ed.target).hasClass('textbox-f')) {
                             $(ed.target).textbox('textbox').focus();
                         } else {
                             $(ed.target).focus();
                         }
                     }
-                    for(var i=0; i<fields.length; i++){
+                    for (var i = 0; i < fields.length; i++) {
                         var col = $(this).datagrid('getColumnOption', fields[i]);
                         col.editor = col.editor1;
                     }
                 });
             },
-            enableCellEditing: function(jq){
-                return jq.each(function(){
+            enableCellEditing: function (jq) {
+                return jq.each(function () {
                     var dg = $(this);
                     var opts = dg.datagrid('options');
                     opts.oldOnClickCell = opts.onClickCell;
-                    opts.onClickCell = function(index, field){
-                        if (opts.editIndex != undefined){
-                            if (dg.datagrid('validateRow', opts.editIndex)){
+                    opts.onClickCell = function (index, field) {
+                        if (opts.editIndex != undefined) {
+                            if (dg.datagrid('validateRow', opts.editIndex)) {
                                 dg.datagrid('endEdit', opts.editIndex);
                                 opts.editIndex = undefined;
                             } else {

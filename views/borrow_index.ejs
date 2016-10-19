@@ -28,7 +28,7 @@
     </div>
     <div style="width: 50%;display: inline-block;vertical-align: top;">
         <div class="easyui-panel" data-options="title:'借阅信息'" style="padding:10px;">
-            <form id="borrow_dialog_ff" class="easyui-form" method="post" data-options="novalidate:true,">
+            <form id="borrow_dialog_ff" class="easyui-form" data-options="novalidate:true,">
                 <div style="margin-bottom:20px">
                     <input id="borrow_select_user_code" name="user_id" style="width:100%">
                 </div>
@@ -146,7 +146,7 @@
                         return;
                     }
                     var occupied = $.grep(rows,function (row) {
-                        return {BORROWED:true,MISSED:false}[row.status];
+                        return {BORROWED:true,MISSED:false}[row.STATUS];
                     });
                     if(occupied&&occupied.length){
                         var msg = $.map(occupied,function (item) {
@@ -181,8 +181,8 @@
                 }},
                 {field: 'price', title: '价格'},
                 {
-                    field: 'status', title: '状态', formatter: function (val, row) {
-                    return {RETURNED: '在库', BORROWED: '借出', MISSED: '损毁遗失'}[val];
+                    field: 'STATUS', title: '状态', formatter: function (val, row) {
+                    return row.missed?'损毁遗失':{RETURNED: '在库', BORROWED: '借出', MISSED: '损毁遗失'}[val||'RETURNED'];
                 }
                 },
                 {
@@ -304,37 +304,31 @@
                 return book.id;
             });
 //            $.messager.progress({title:'数据保存中,请稍后...'});
-            $('#borrow_dialog_ff').form('enableValidation').form('submit', {
-                onSubmit: function () {
-                    var isValid = $(this).form('validate');
-                    if (!isValid) {
-                        $.messager.progress('close');	// hide progress bar while the form is invalid
-                    }
-                    return isValid;	// return false will stop the form submission
-                },
-                success: function (data) {
-                    $.ajax({
-                        url:'/borrow/action',
-                        type:'post',
-                        dataType:'json',
-                        data:{
-                            user_id:user_id,
-                            book_ids:book_ids
-                        }
-                    }).done(function (ret) {
-                        if (ret.flag) {
-                            $.messager.alert('提示', '保存成功!');
-                            $('#borrow_dg').datagrid('reload');
-                            $('#borrow_dlg_cache').dialog('close');
-                        } else {
-                            $.messager.alert('提示', data.msg || '保存失败,请检查网络连接或者权限!');
-                        }
-                    }).fail(function () {
-                        $.messager.alert('提示', data.msg || '保存失败,请检查网络连接或者权限!');
-                    }).always(function () {
-                        $.messager.progress('close');
-                    });
+//            var isValid = $('#borrow_dialog_ff').form('enableValidation').form('validate');
+//            if(!isValid){
+//                $.messager.alert('提示','请选择用户!');
+//                return;
+//            }
+            $.ajax({
+                url:'borrow/action',
+                type:'post',
+                dataType:'json',
+                data:{
+                    user_id:user_id,
+                    book_ids:book_ids
                 }
+            }).done(function (ret) {
+                if (ret.flag) {
+                    $.messager.alert('提示', '保存成功!');
+                    $('#borrow_dg').datagrid('reload');
+                    $('#borrow_dlg_cache').dialog('close');
+                } else {
+                    $.messager.alert('提示', ret.msg || '保存失败,请检查网络连接或者权限!');
+                }
+            }).fail(function () {
+                $.messager.alert('提示', '保存失败,请检查网络连接或者权限!');
+            }).always(function () {
+                $.messager.progress('close');
             });
 
         }

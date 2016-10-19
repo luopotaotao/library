@@ -20,7 +20,7 @@ SELECT count(*) c FROM records WHERE userId = :userId AND borrow_date BETWEEN :s
 UNION ALL
 SELECT count(*) c FROM records WHERE userId = :userId AND borrow_date BETWEEN :month_start and :month_end
 UNION ALL
-SELECT count(*) c FROM books WHERE userId = :userId`;
+SELECT count(*) c FROM records WHERE userId = :userId and status in('BORROWED','OVERDUE')`;
 function userStatistic(user_id,callback) {
     var now = new Date(),
         year = now.getFullYear(),
@@ -48,10 +48,6 @@ function userStatistic(user_id,callback) {
         callback(ret);
     });
 }
-
-userStatistic(1,function (ret) {
-    console.log(ret);
-});
 
 module.exports ={
     userStatistic:userStatistic

@@ -164,8 +164,8 @@ function findByUsernamePassword(username, password, callback) {
     }).then(callback);
 }
 
-function findById(id, callback) {
-    User.findById(id).then(callback);
+function findById(id, callback,errHandler) {
+    User.findById(id).then(callback).catch(errHandler);
 }
 function getNewInstance(callback) {
     var user = User.build({});

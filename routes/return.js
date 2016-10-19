@@ -5,6 +5,7 @@ var express = require('express');
 var util = require('util');
 var borrowService = require('../service/BorrowService');
 var bookService = require('../service/BookService');
+var recordService = require('../service/RecordService');
 var BOOK_STATUS = require('../db/libraryModels').CONST_BOOK_STATUS;
 var router = express.Router();
 
@@ -15,12 +16,12 @@ router
     })
     .get('/list',function (req,res,next) {
         req.query.status = [BOOK_STATUS.BORROWED,BOOK_STATUS.OVERDUE];
-        bookService.query(req.query, function (result) {
+        recordService.query(req.query, function (result) {
             res.json(result || {total: 0, rows: []});
         });
     })
     .post('/return',function (req,res,next) {
-        bookService.markReturned(req.body,function (result) {
+        recordService.markReturned(req.body,function (result) {
             if(result){
                 res.json({
                     flag:true,
