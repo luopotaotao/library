@@ -62,8 +62,7 @@
                    data-options="label:'借阅周期:',required:true">
         </div>
         <div style="margin-bottom:20px">
-            <input class="easyui-textbox" name="password" style="width:100%"
-                   data-options="label:'默认密码:',required:true"  validType="length[5,10]">
+            <input id="user_edit_password_input" style="width:100%" value="66666666">
         </div>
         <div style="margin-bottom:20px">
             <select class="easyui-combobox" name="role" label="员工角色" style="width:100%">
@@ -97,12 +96,47 @@
                         $('#users_dlg_import_ff').form('clear');
                     }
                     ">
-    <form id="users_dlg_import_ff" class="easyui-form" action="users/import" method="post" enctype="multipart/form-data" data-options="novalidate:true">
-        <input name="file" class="easyui-filebox" style="width:100%" data-options="prompt:'选择文件',buttonText:'选择',accept: '.xlsx'">
+    <form id="users_dlg_import_ff" class="easyui-form" action="users/import" method="post" enctype="multipart/form-data"
+          data-options="novalidate:true">
+        <input name="file" class="easyui-filebox" style="width:100%"
+               data-options="prompt:'选择文件',buttonText:'选择',accept: '.xlsx'">
     </form>
 </div>
 <script type="text/javascript">
     $(function () {
+        $('#user_edit_password_input').textbox({
+            label: '默认密码:',
+            required: true,
+            editable: false,
+            buttonText: '重置',
+            onClickButton: function () {
+                var id = $('#users_ff input[name="id"]').val();
+                if (id) {
+                    var name = $('#users_ff input[name="name"]').val();
+                    $.messager.confirm('请确认', '是否确认重置用户<span style="color:green">' + name + '</span>的密码', function (r) {
+                        if (r) {
+                            $.ajax({
+                                url: 'users/resetPassword',
+                                type: 'get',
+                                dataType: 'json',
+                                data: {id: id}
+                            }).done(function (ret) {
+                                if (ret && typeof ret.flag === "boolean") {
+                                    $.messager.alert('提示', ret.msg || (ret.flag ? '密码重置成功!' : '密码重置失败!'));
+                                } else {
+                                    $.messager.alert('提示', '密码重置失败!');
+                                }
+                            }).fail(function () {
+                                $.messager.alert('提示', '密码重置失败!');
+                            });
+                        }
+                    })
+
+                } else {
+                    $.messager.alert('提示', '请选择用户!');
+                }
+            }
+        });
         $('#users_dg').datagrid({
             url: 'users/list',
             method: 'get',
@@ -111,7 +145,7 @@
             singleSelect: false,
             pagination: true,
             pageSize: 10,
-            rownumbers:true,
+            rownumbers: true,
             toolbar: [{
                 text: '添加',
                 iconCls: 'icon-add',
@@ -153,23 +187,23 @@
                         }
                     });
                 }
-            },{
-                    text:'导入',
-                    iconCls:'icon-undo',
-                    handler:function(){
-                        $('#users_dlg_import').dialog('open');
-                    }
-            },{
-                text:'导出',
-                iconCls:'icon-redo',
-                handler:function(){
-                    var name = $('#books_search_name').val();
-                    window.location = 'users/export'+(name?('?name='+encodeURIComponent(name)):'');
+            }, {
+                text: '导入',
+                iconCls: 'icon-undo',
+                handler: function () {
+                    $('#users_dlg_import').dialog('open');
                 }
-            },{
-                text:'数据模板',
-                plain:true,
-                handler:function(){
+            }, {
+                text: '导出',
+                iconCls: 'icon-redo',
+                handler: function () {
+                    var name = $('#books_search_name').val();
+                    window.location = 'users/export' + (name ? ('?name=' + encodeURIComponent(name)) : '');
+                }
+            }, {
+                text: '数据模板',
+                plain: true,
+                handler: function () {
                     window.location = 'users/template';
                 }
             }],
@@ -232,6 +266,7 @@
                 });
             }
         }
+
         function showEditDialog(data) {
             var $form = $('#users_ff');
             if (data) {
@@ -246,7 +281,7 @@
         }
 
         function submitForm() {
-            $.messager.progress({title:'数据保存中,请稍后...'});	// display the progress bar
+            $.messager.progress({title: '数据保存中,请稍后...'});	// display the progress bar
             $('#users_ff').form('enableValidation').form('submit', {
                 onSubmit: function () {
                     var isValid = $(this).form('validate');
@@ -268,20 +303,21 @@
                 }
             });
         }
+
         function importUsers() {
-            $.messager.progress({title:'数据导入中,请稍后...'});	// display the progress bar
+            $.messager.progress({title: '数据导入中,请稍后...'});	// display the progress bar
             $('#users_dlg_import_ff').form('enableValidation').form('submit', {
                 onSubmit: function () {
                     var filename = $('#users_dlg_import_ff').find('input[name="file"]').val();
-                    if(!filename.endsWith('.xlsx')){
+                    if (!filename.endsWith('.xlsx')) {
                         $.messager.progress('close');
-                        $.messager.alert('提示','请选择*.xlsx文件!');
+                        $.messager.alert('提示', '请选择*.xlsx文件!');
                         return false;
                     }
                     var isValid = $(this).form('validate');
                     if (!isValid) {
                         $.messager.progress('close');
-                        $.messager.alert('提示','请选择文件!');
+                        $.messager.alert('提示', '请选择文件!');
                     }
                     return isValid;
                 },
@@ -289,7 +325,7 @@
                     data = $.parseJSON(data);
                     $.messager.progress('close');
                     if (data.flag) {
-                        $.messager.alert('提示', data.msg||'导入成功!');
+                        $.messager.alert('提示', data.msg || '导入成功!');
                         $('#users_dlg_import').dialog('close');
                         $('#users_dg').datagrid('reload');
                     } else {
@@ -298,13 +334,14 @@
                 }
             });
         }
+
         function closeEditDialog() {
             $('#users_ff').form('clear');
             $('#users_dlg_edit').dialog('close');
         }
 
-        function remove(ids,callback) {
-            $.messager.progress({title:'正在删除,请稍后...'});	// display the progress bar
+        function remove(ids, callback) {
+            $.messager.progress({title: '正在删除,请稍后...'});	// display the progress bar
             $.ajax({
                 url: '/users/delete',
                 data: {ids: ids},
@@ -312,7 +349,7 @@
                 dataType: 'json'
             }).done(function (ret) {
                 if (ret && ret.flag) {
-                    if($.isFunction(callback)){
+                    if ($.isFunction(callback)) {
                         callback();
                     }
                     $.messager.alert('提示', '删除成功!');
@@ -325,6 +362,7 @@
                 $.messager.progress('close');
             });
         }
+
         $.extend({
             users: {
                 submitForm: submitForm,

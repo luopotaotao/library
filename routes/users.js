@@ -181,17 +181,35 @@ router
 
         });
     })
-    .post('/resetPassword',function (req,res,next) {
+    .post('/updatePassword',function (req,res,next) {
         var params = req.body;
         var id = req.session.user.id;
         if(id&&params.password&&params.new_password){
-            userService.resetPassword(id,params.password,params.new_password,function (ret) {
+            userService.updatePassword(id,params.password,params.new_password,function (ret) {
                 if(ret.flag==false&&ret.msg){
                     res.json(ret);
                     return;
                 }
                 if(ret){
                     console.log(ret);
+                    res.json({flag:true,msg:'密码更新成功!'});
+                }else{
+                    res.json({flag:false,msg:'密码更新失败!'});
+                }
+            })
+        }else{
+            res.json({flag:false,msg:'信息不完整!'});
+        }
+    })
+    .get('/resetPassword',function (req,res,next) {
+        var id = req.query.id;
+        if(id){
+            userService.resetPassword(id,function (ret) {
+                if(ret.flag===false&&ret.msg){
+                    res.json(ret);
+                    return;
+                }
+                if(ret){
                     res.json({flag:true,msg:'密码更新成功!'});
                 }else{
                     res.json({flag:false,msg:'密码更新失败!'});

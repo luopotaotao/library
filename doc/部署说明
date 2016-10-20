@@ -2,4 +2,5 @@
     node_modules\express\lib\response.js 第246行改为
         this.set('Content-Type', 'text/plain; charset=utf-8');
 2.执行当前目录下的sql脚本
-3.启动服务器
+3.启动服务器 cmd切换到bin的上级目录,执行 node bin/www
+

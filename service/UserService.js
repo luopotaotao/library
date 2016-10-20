@@ -97,7 +97,7 @@ function update(user, callback, errorHandler) {
         }
     }).catch(errorHandler)
 }
-function resetPassword(id, password, new_password,callback) {
+function updatePassword(id, password, new_password,callback) {
     User.findById(id).then(function (user) {
         if (user.id && user.password == password) {
             user.update({password: new_password}, {fields: ['password']}).then(callback).catch(function () {
@@ -105,6 +105,17 @@ function resetPassword(id, password, new_password,callback) {
             });
         }else{
             callback({flag:false,msg:'密码错误!'});
+        }
+    }).catch(function () {
+        callback({flag:false,msg:'服务器错误!'});
+    })
+}
+function resetPassword(id,callback) {
+    User.findById(id).then(function (user) {
+        if (user.id) {
+            user.update({password: sha1('66666666')}, {fields: ['password']}).then(callback).catch(function () {
+                callback({flag:false,msg:'服务器错误!'});
+            });
         }
     }).catch(function () {
         callback({flag:false,msg:'服务器错误!'});
@@ -202,6 +213,7 @@ module.exports = {
     findById: findById,
     findByUsernamePassword: findByUsernamePassword,
     getNewInstance: getNewInstance,
+    updatePassword:updatePassword,
     resetPassword:resetPassword
 }
 

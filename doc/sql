@@ -115,5 +115,5 @@ end
 DELIMITER ;
 SET FOREIGN_KEY_CHECKS=1;
 
-INSERT INTO `library`.`users` (`id`, `code`, `name`, `gender`, `birth`, `period`, `role`, `company`, `cost_center`, `id_code`, `phone`, `email`, `password`, `deleted`, `createdAt`, `updatedAt`) VALUES ('0', 'admin', '超级管理员', NULL, NULL, '30', 'SUPER', NULL, NULL, NULL, NULL, NULL, '933f868ccf7ece7601793d3887f5522fbb341418', '0', '2016-10-18 11:13:35', '2016-10-19 06:04:21');
+INSERT INTO `library`.`users` (`id`, `code`, `name`, `gender`, `birth`, `period`, `role`, `company`, `cost_center`, `id_code`, `phone`, `email`, `password`, `deleted`, `createdAt`, `updatedAt`) VALUES ('1', 'admin', '超级管理员', NULL, NULL, '30', 'SUPER', NULL, NULL, NULL, NULL, NULL, '933f868ccf7ece7601793d3887f5522fbb341418', '0', '2016-10-18 11:13:35', '2016-10-19 06:04:21');
 

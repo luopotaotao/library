@@ -26,7 +26,7 @@ function userStatistic(user_id,callback) {
         year = now.getFullYear(),
         month = now.getMonth();
     var year_start = new Date(year, 0, 1),
-        year_end = new Date(year, 1, 1),
+        year_end = new Date(year+1, 1, 1),
         month_start = new Date(year, month, 1),
         month_end = new Date(year, month + 1, 1),
         season_start = new Date(year, Math.floor(1 / 3) * 3 + month, 1),
@@ -35,12 +35,12 @@ function userStatistic(user_id,callback) {
         {
             replacements: {
                 userId:user_id,
-                year_start: 'year_start',
-                year_end: 'year_end',
-                month_start: 'month_start',
-                month_end: 'month_end',
-                season_start: 'season_start',
-                season_end: 'season_end'
+                year_start: year_start,
+                year_end: year_end,
+                month_start: month_start,
+                month_end: month_end,
+                season_start: season_start,
+                season_end: season_end
             }, type: seq.QueryTypes.SELECT
         }
     ).then(function (l) {

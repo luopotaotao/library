@@ -59,14 +59,14 @@
         buttons: [{
             text: '确认',
             iconCls: 'icon-ok',
-            handler: $.password.resetPassword
+            handler: $.password.updatePassword
             }, {
             text: '取消',
             iconCls: 'icon-cancel',
             handler: $.password.closeEditDialog
             }]
         ">
-    <form id="password_ff" class="easyui-form" action="users/resetPassword" method="post"
+    <form id="password_ff" class="easyui-form" action="users/updatePassword" method="post"
           data-options="novalidate:true">
         <div style="margin-bottom:20px">
             <input id="password_ff_input_password" class="easyui-textbox" name="password" style="width:100%"
@@ -132,7 +132,7 @@
             });
         }
 
-        function resetPassword() {
+        function updatePassword() {
             $.messager.progress({title: '数据保存中,请稍后...'});	// display the progress bar
             var isValid = $('#password_ff').form('enableValidation').form('validate');
             if (!isValid) {
@@ -145,7 +145,7 @@
                     password = hex_sha1($password_input.val()),
                     new_password = hex_sha1($new_password_input.val());
             $.ajax({
-                url: 'users/resetPassword',
+                url: 'users/updatePassword',
                 type: 'post',
                 dataType: 'json',
                 data: {password: password, new_password: new_password}
@@ -170,7 +170,7 @@
 
         $.extend({
             password: {
-                resetPassword: resetPassword,
+                updatePassword: updatePassword,
                 closeEditDialog: closeEditDialog
             }
         })
