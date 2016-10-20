@@ -145,37 +145,16 @@ router
             if (l.flag === false && l.msg) {
                 res.json(l);
             } else {
-                var isValid = l.every(function (item) {
-                    return item.code && item.name;
-                });
-                if (!isValid) {
-                    removeTmpFile();
-                    res.json({
-                        flag: false,
-                        msg: '每条记录都必须有工号和姓名!请修正后重新导入!'
-                    });
-                    return;
-                }
                 userService.bulkAdd(l,
                     function (result) {
                         removeTmpFile();
-                        res.json({flag: true, msg: '成功导入' + result.length + '条数据'});
+                        res.json(result);
                     }, function (e) {
                         removeTmpFile();
-                        if (e && e.err == 'exist') {
-                            var msg_arr = e.data.map(function (item) {
-                                return item.code;
-                            });
-                            res.json({
-                                flag: false,
-                                msg: '以下工号已存在,请修改后重新导入!' + msg_arr.join(',')
-                            });
-                        } else {
-                            res.json({
-                                flag: false,
-                                msg: '导入失败,请使用导入数据模板导入数据!'
-                            });
-                        }
+                        res.json({
+                            flag: false,
+                            msg: '导入失败,请使用导入数据模板导入数据!'
+                        });
                     });
             }
 

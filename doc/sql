@@ -89,8 +89,40 @@ CREATE TABLE `users` (
 -- View structure for book_records
 -- ----------------------------
 DROP VIEW IF EXISTS `book_records`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `book_records` AS select `b`.`id` AS `id`,`b`.`code` AS `code`,`b`.`name` AS `name`,`b`.`author` AS `author`,`b`.`translator` AS `translator`,`b`.`publisher` AS `publisher`,`b`.`date` AS `date`,`b`.`price` AS `price`,`b`.`missed` AS `missed`,`b`.`deleted` AS `deleted`,`b`.`createdAt` AS `createdAt`,`b`.`updatedAt` AS `updatedAt`,`b`.`recordId` AS `recordId`,`r`.`borrow_date` AS `borrow_date`,`r`.`deadline` AS `deadline`,`r`.`status` AS `STATUS`,`r`.`return_date` AS `return_date`,`u`.`name` AS `uname` from ((`books` `b` left join `records` `r` on((`b`.`recordId` = `r`.`id`))) left join `users` `u` on((`r`.`userId` = `u`.`id`))) ;
-
+SELECT
+	`b`.`id` AS `id`,
+	`b`.`code` AS `code`,
+	`b`.`name` AS `name`,
+	`b`.`author` AS `author`,
+	`b`.`translator` AS `translator`,
+	`b`.`publisher` AS `publisher`,
+	`b`.`date` AS `date`,
+	`b`.`price` AS `price`,
+	`b`.`missed` AS `missed`,
+	`b`.`deleted` AS `deleted`,
+	`b`.`createdAt` AS `createdAt`,
+	`b`.`updatedAt` AS `updatedAt`,
+	`b`.`recordId` AS `recordId`,
+	`r`.`borrow_date` AS `borrow_date`,
+	`r`.`deadline` AS `deadline`,
+	(
+		CASE
+		WHEN isnull(`r`.`status`) THEN
+			'RETURNED'
+		ELSE
+			`r`.`status`
+		END
+	) AS `STATUS`,
+	`r`.`return_date` AS `return_date`,
+	`u`.`name` AS `uname`
+FROM
+	(
+		(
+			`books` `b`
+			LEFT JOIN `records` `r` ON ((`b`.`recordId` = `r`.`id`))
+		)
+		LEFT JOIN `users` `u` ON ((`r`.`userId` = `u`.`id`))
+	);
 -- ----------------------------
 -- View structure for record_books
 -- ----------------------------

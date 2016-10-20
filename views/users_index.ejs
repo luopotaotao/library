@@ -325,9 +325,51 @@
                     data = $.parseJSON(data);
                     $.messager.progress('close');
                     if (data.flag) {
-                        $.messager.alert('提示', data.msg || '导入成功!');
+
+                        var msg_arr = [];
+                        var repeated = data.repeated;
+                        var missed = data.missed;
+
+                        if (data.inserted) {
+                            $('#users_dg').datagrid('reload');
+                            msg_arr.push('成功导入');
+                            msg_arr.push(data.inserted);
+                            msg_arr.push('条数据!<br>');
+                        } else {
+                            msg_arr.push('未导入有效数据!<br>');
+                        }
+
+                        function appendMsg(msg, items) {
+                            var tr = '<tr><td>code</td><td>name</td></tr>';
+
+                            function getTr(item) {
+                                return tr.replace(/code/g, item.code||'').replace(/name/g, item.name||'');
+                            }
+
+                            msg_arr.push(msg);
+                            msg_arr.push('<table><thead><th>工号</th><th>姓名</th></thead><tbody>');
+                            if (items.length < 10) {
+                                items.forEach(function (item) {
+                                    msg_arr.push(getTr(item));
+                                });
+                            } else {
+                                for (var i = 0; i < 10; i++) {
+                                    msg_arr.push(getTr(items[i]));
+                                }
+                                msg_arr.push('<tr><td colspan="2">等count条数据</td></tr>'.replace(/count/, items.length));
+                            }
+                            msg_arr.push('</tbody></table>');
+                        }
+
+                        if (repeated && repeated.length) {
+                            appendMsg('以下用户数据重复,未能导入!', repeated);
+                        }
+                        if (missed && missed.length) {
+                            appendMsg('以下用户数据信息不完整,未能导入!', missed);
+                        }
+                        $.messager.alert('提示:导入结束!', msg_arr.join(''));
                         $('#users_dlg_import').dialog('close');
-                        $('#users_dg').datagrid('reload');
+
                     } else {
                         $.messager.alert('提示', data.msg || '导入失败,请检查网络连接或者权限!');
                     }

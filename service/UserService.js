@@ -5,6 +5,7 @@
 var util = require("util");
 var User = require('../db/libraryModels').User;
 const crypto = require('crypto');
+var dataSorter = require('../utils/DataSorter');
 
 function sha1(source) {
     return crypto.createHash('sha1', '').update('' + source).digest('hex');
@@ -24,26 +25,55 @@ function add(user, callback, errorHandler) {
     }).catch(errorHandler);
 }
 function bulkAdd(users, callback, errorHandler) {
-    var codes = users.map(function (item) {
-        return item.code;
+    var sortedUsers = dataSorter.sort(users,function (user) {
+        user.password = sha1(user.password || '66666666');
     });
-    if (codes.length > 0) {
-        User.findAll({
-            where: {
-                code: {
-                    $in: codes
+    if(users){
+        var avail = sortedUsers.avail,
+            repeated = sortedUsers.repeated,
+            missed = sortedUsers.missed;
+        if (avail.size>0) {
+            var codes = [];
+            for(let key of avail.keys()){
+                codes.push(key);
+            }
+            User.findAll({
+                where: {
+                    code: {
+                        $in: codes
+                    }
                 }
-            }
-        }).then(function (result) {
-            if (result && result.length > 0) {
-                errorHandler({flag: false, err: 'exist', data: result});
-            } else {
-                users.forEach(function (item) {
-                    item.password = sha1(item.password || '66666666');
-                });
-                User.bulkCreate(users, {validate: true}).then(callback).catch(errorHandler);
-            }
-        });
+            }).then(function (result) {
+                if (result && result.length > 0) {
+                    result.forEach(function (item) {
+                        repeated.push(item);
+                        avail.delete(item.code);
+                    });
+                }
+                if(avail.size>0) {
+                    var toAdded = [];
+                    for(let item of avail.values()){
+                        toAdded.push(item);
+                    }
+                    User.bulkCreate(toAdded, {validate: true}).then(function (ret) {
+                        callback({
+                            flag:true,
+                            inserted:ret.length,
+                            repeated:repeated,
+                            missed:missed
+                        })
+                    }).catch(function (e) {
+                        errorHandler(e);
+                    });
+                }else{
+                    callback({
+                        flag:true,
+                        repeated:repeated,
+                        missed:missed
+                    });
+                }
+            });
+        }
     }
 }
 /**
@@ -97,28 +127,28 @@ function update(user, callback, errorHandler) {
         }
     }).catch(errorHandler)
 }
-function updatePassword(id, password, new_password,callback) {
+function updatePassword(id, password, new_password, callback) {
     User.findById(id).then(function (user) {
         if (user.id && user.password == password) {
             user.update({password: new_password}, {fields: ['password']}).then(callback).catch(function () {
-                callback({flag:false,msg:'服务器错误!'});
+                callback({flag: false, msg: '服务器错误!'});
             });
-        }else{
-            callback({flag:false,msg:'密码错误!'});
+        } else {
+            callback({flag: false, msg: '密码错误!'});
         }
     }).catch(function () {
-        callback({flag:false,msg:'服务器错误!'});
+        callback({flag: false, msg: '服务器错误!'});
     })
 }
-function resetPassword(id,callback) {
+function resetPassword(id, callback) {
     User.findById(id).then(function (user) {
         if (user.id) {
             user.update({password: sha1('66666666')}, {fields: ['password']}).then(callback).catch(function () {
-                callback({flag:false,msg:'服务器错误!'});
+                callback({flag: false, msg: '服务器错误!'});
             });
         }
     }).catch(function () {
-        callback({flag:false,msg:'服务器错误!'});
+        callback({flag: false, msg: '服务器错误!'});
     })
 }
 function query(params, callback) {
@@ -128,7 +158,7 @@ function query(params, callback) {
     }
     var page = params.hasOwnProperty('page') ? parseInt(params.page) : 1,
         rows = params.hasOwnProperty('rows') ? parseInt(params.rows) : 10,
-        where = {deleted: false,id:{$gt:1}};
+        where = {deleted: false, id: {$gt: 1}};
     if (params.name) {
         where.$or = {
             name: {
@@ -213,8 +243,8 @@ module.exports = {
     findById: findById,
     findByUsernamePassword: findByUsernamePassword,
     getNewInstance: getNewInstance,
-    updatePassword:updatePassword,
-    resetPassword:resetPassword
+    updatePassword: updatePassword,
+    resetPassword: resetPassword
 }
 
 

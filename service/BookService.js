@@ -10,15 +10,65 @@ var BookRecord = db.BookRecord;
 var User = db.User;
 var Seq = db.Seq;
 var seq = db.seq;
-var BOOK_STATUS = db.CONST_BOOK_STATUS;
-var dateFormatter = require('../utils/DateFormater');
+var dataSorter = require('../utils/DataSorter');
 
 function add(book, callback, errorHandler) {
     Book.create(book).then(callback).catch(errorHandler);
 }
+// function bulkAdd(books, callback, errorHandler) {
+//     Book.bulkCreate(books, {validate: true}).then(callback).catch(errorHandler);
+// }
 function bulkAdd(books, callback, errorHandler) {
-    Book.bulkCreate(books, {validate: true}).then(callback).catch(errorHandler);
+    var sorted = dataSorter.sort(books);
+    if(sorted){
+        var avail = sorted.avail,
+            repeated = sorted.repeated,
+            missed = sorted.missed;
+        if (avail.size>0) {
+            var codes = [];
+            for(let key of avail.keys()){
+                codes.push(key);
+            }
+            Book.findAll({
+                where: {
+                    code: {
+                        $in: codes
+                    }
+                }
+            }).then(function (result) {
+                if (result && result.length > 0) {
+                    result.forEach(function (item) {
+                        repeated.push(item);
+                        avail.delete(item.code);
+                    });
+                }
+                if(avail.size>0) {
+                    var toAdded = [];
+                    for(let item of avail.values()){
+                        toAdded.push(item);
+                    }
+                    Book.bulkCreate(toAdded, {validate: true}).then(function (ret) {
+                        callback({
+                            flag:true,
+                            inserted:ret.length,
+                            repeated:repeated,
+                            missed:missed
+                        })
+                    }).catch(function (e) {
+                        errorHandler(e);
+                    });
+                }else{
+                    callback({
+                        flag:true,
+                        repeated:repeated,
+                        missed:missed
+                    });
+                }
+            });
+        }
+    }
 }
+
 /**
  * 删除书籍信息
  *@param book 可以为id数组[1,2...],或者单个id 1,2,..或者带有id属性的对象{id:1}
