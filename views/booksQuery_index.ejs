@@ -12,7 +12,9 @@
     <div data-options="name:'damaged'">损坏/丢失</div>
     <div data-options="name:'inquiry'">入库</div>
 </div>
-<table id="books_query_dg" style="height: 97%;width: 99%" rownumbers="true"></table>
+<div style="height: 96%;width: 100%;overflow: hidden">
+    <table id="books_query_dg" style="height: 100%;width: 102%;"></table>
+</div>
 <div id="books_query_dlg_edit" class="easyui-dialog" style="width:100%;max-width:800px;padding:30px 60px;" data-options="
     title: '图书详情',
     closed: true,
@@ -58,6 +60,7 @@
             iconCls: 'icon-save',
             fitColumns: true,
             singleSelect: true,
+            rownumbers:true,
             pagination: true,
             pageSize: 10,
             columns: [[

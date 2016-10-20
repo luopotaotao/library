@@ -3,7 +3,9 @@
         $('#borrow_dg').datagrid('load',{name:encodeURIComponent(name)});
     }" style="width:100%">
 </div>
-<table id="borrow_dg" style="height: 97%;width: 99%"></table>
+<div style="height: 96%;width: 100%;overflow: hidden">
+    <table id="borrow_dg" style="height: 100%;width: 102%;"></table>
+</div>
 <div id="borrow_dlg_cache" class="easyui-dialog"
      style="width:100%;max-width:800px;padding:10px 20px;margin-right: -10px" data-options="
     title: '借阅一览表',
@@ -11,6 +13,7 @@
     top:$(window).height()/2,
     closed: false,
     modal: false,
+    inline:true,
     draggable: true,
     minimizable:false,
     collapsible:true,
