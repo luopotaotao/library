@@ -171,7 +171,7 @@ function query(params, callback) {
             replacements: {
                 name:'%'+(params.name||'')+'%',
                 status: params.status||['BORROWED','RETURNED','OVERDUE','MISSED'],
-                page:page>0?page-1:0,
+                page:page>0?(page-1)*rows:0,
                 rows:rows
             }, type: seq.QueryTypes.SELECT
         }

@@ -1,5 +1,6 @@
 <div style="width:60%">
     <input class="easyui-searchbox" data-options="prompt:'请输入员工姓名或者员工编号',menu:'#borrow_users_mm',searcher:function (name, role) {
+    debugger;
         $('#borrow_dg_users').datagrid('load', {
             name:encodeURIComponent(name),
             role: role == '0' ? '' : role

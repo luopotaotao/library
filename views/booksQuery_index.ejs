@@ -1,16 +1,16 @@
 <div style="width:60%">
-    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',menu:'#books_query_mm',searcher:function (name, return_status) {
+    <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号',menu:'#books_query_mm',searcher:function (name, status) {
         $('#books_query_dg').datagrid('load',{
             name:encodeURIComponent(name),
-            return_status:return_status==0?'':return_status
+            status:status==0?'':status
         });
     }" style="width:100%">
 </div>
 <div id="books_query_mm">
-    <div data-options="name:'',iconCls:'icon-ok'">全部</div>
-    <div data-options="name:'loan'">借出</div>
-    <div data-options="name:'damaged'">损坏/丢失</div>
-    <div data-options="name:'inquiry'">入库</div>
+    <div data-options="name:'0',iconCls:'icon-ok'">全部</div>
+    <div data-options="name:'BORROWED'">借出</div>
+    <div data-options="name:'MISSED'">损坏/丢失</div>
+    <div data-options="name:'RETURNED'">入库</div>
 </div>
 <div style="height: 96%;width: 100%;overflow: hidden">
     <table id="books_query_dg" style="height: 100%;width: 102%;"></table>

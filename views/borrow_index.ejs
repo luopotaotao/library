@@ -63,7 +63,8 @@
         </div>
     </div>
 </div>
-
+<div id="select_user_dlg">
+</div>
 <script>
     $(function () {
         $('#borrow_select_user_code').textbox({
@@ -92,15 +93,17 @@
             }
         });
         function selectUser(callback) {
-            var $doc = $(document);
             var height = screen.availHeight * 0.5, width = screen.availWidth * 0.3;
-            var $div = $('<div/>', {height: height, width: width});
+
+            var $div = $('#select_user_dlg');
             $div.dialog({
                 title: '请选择',
                 closed: false,
                 cache: true,
                 href: '/borrow/select_user',
                 modal: true,
+                height:height,
+                width:width,
                 buttons: [{
                     text: '确定',
                     handler: function () {
@@ -154,6 +157,7 @@
             rownumbers: true,
             toolbar: [{
                 text: '加入借阅库',
+                iconCls: 'icon-add',
                 handler: function () {
                     debugger;
                     var rows = $('#borrow_dg').datagrid('getChecked');
@@ -186,11 +190,6 @@
                             $('#borrow_dlg_dg').datagrid('appendRow', rows[i]);
                         }
                     }
-                }
-            }, {
-                text: '查看借阅库',
-                handler: function () {
-                    showCacheDialog();
                 }
             }],
             columns: [[
@@ -285,18 +284,6 @@
             }
         }
 
-        function showCacheDialog(data) {
-            var rows = $('#borrow_dg').data('cache');
-            if (rows && rows.length) {
-                var $dlg = $('#borrow_dlg_cache');
-                $dlg.find('#borrow_dlg_dg').datagrid('loadData', {rows: rows});
-                $('#borrow_dlg_cache').dialog('open');
-            } else {
-                $.messager.alert('提示', '借阅库没有数据!');
-            }
-
-        }
-
         function removeCurrentRow(target) {
             var $this = $(target);
             var index = $this.parents('.datagrid-row').first().attr('datagrid-row-index')
@@ -329,12 +316,7 @@
             var book_ids = $.map(books, function (book) {
                 return book.id;
             });
-//            $.messager.progress({title:'数据保存中,请稍后...'});
-//            var isValid = $('#borrow_dialog_ff').form('enableValidation').form('validate');
-//            if(!isValid){
-//                $.messager.alert('提示','请选择用户!');
-//                return;
-//            }
+
             $.ajax({
                 url: 'borrow/action',
                 type: 'post',
@@ -363,36 +345,6 @@
             var $dlg = $('#borrow_dlg_cache');
             $dlg.find('.datagrid-f').datagrid('loadData', {total: 0, rows: []});
             $dlg.find('form').form('clear');
-        }
-
-        function removeCache(obj) {
-            var rows = $('#borrow_dg').data('cache');
-            if (rows && row.length) {
-                rows = $.filter(rows, function (i, row) {
-                    return row.id != obj.id;
-                });
-                $('#borrow_dg').data('cache', rows);
-            }
-
-        }
-
-        function remove(ids, callback) {
-            $.ajax({
-                url: '/books/delete',//TODO url
-                data: {ids: ids},
-                type: 'post',
-                dataType: 'json'
-            }).done(function (ret) {
-                if (ret && ret.flag) {
-                    $.messager.alert('提示', '删除成功!');
-                } else {
-                    $.messager.alert('提示', ret, msg || '删除失败!');
-                }
-            }).fail(function () {
-                $.messager.alert('提示', '删除失败!');
-            }).always(function () {
-                $.messager.progress('close');
-            });
         }
 
         $.extend({

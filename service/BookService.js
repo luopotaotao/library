@@ -15,12 +15,10 @@ var dataSorter = require('../utils/DataSorter');
 function add(book, callback, errorHandler) {
     Book.create(book).then(callback).catch(errorHandler);
 }
-// function bulkAdd(books, callback, errorHandler) {
-//     Book.bulkCreate(books, {validate: true}).then(callback).catch(errorHandler);
-// }
+
 function bulkAdd(books, callback, errorHandler) {
     var sorted = dataSorter.sort(books);
-    if(sorted){
+    if(books){
         var avail = sorted.avail,
             repeated = sorted.repeated,
             missed = sorted.missed;
@@ -155,7 +153,7 @@ WHERE
 	and ( name like :name or code like :name)
 	and  status in(:status)
 ORDER BY
-    updatedAt desc
+    borrow_date desc,updatedAt desc
 LIMIT :page,:rows;
 `;
 
@@ -202,7 +200,7 @@ function query(params, callback) {
                     replacements: {
                         name:['%', params.name, '%'].join(''),
                         status: params.status||['BORROWED','RETURNED','OVERDUE','MISSED'],
-                        page:page>0?page-1:0,
+                        page:page>0?(page-1)*rows:0,
                         rows:rows
                     }, type: seq.QueryTypes.SELECT
                 }
