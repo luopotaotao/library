@@ -67,6 +67,17 @@ router
                     console.log(e);
                 });
             }
+            var isValid = l.every(function (item) {
+                return item.code&&item.name;
+            });
+            if(!isValid){
+                removeTmpFile();
+                res.json({
+                    flag:false,
+                    msg:'每条记录都必须有编号和书名!请修正后重新导入!'
+                });
+                return;
+            }
             bookService.bulkAdd(l,
                 function (result) {
                     removeTmpFile();

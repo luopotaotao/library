@@ -8,6 +8,7 @@
     <script type="text/javascript" src="/javascripts/jquery-1.11.3.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.easyui.min.js"></script>
     <script type="text/javascript" src="/javascripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/javascripts/sha1.js"></script>
 </head>
 <body>
 
@@ -63,7 +64,14 @@
     function submitForm() {
         $('#ff').form('submit', {
             onSubmit: function () {
-                return $(this).form('enableValidation').form('validate');
+                var isValid = $(this).form('enableValidation').form('validate');
+                debugger;
+                if(isValid){
+                    var $password = $(this).find('input[name="password"]');
+                    var text = $password.val();
+                    $password.val(hex_sha1(text));
+                }
+                return isValid;
             }, success: function (data) {
                 data = $.parseJSON(data);
                 if(data.flag){

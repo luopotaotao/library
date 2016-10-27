@@ -50,16 +50,29 @@ function parseXlsx(filePath, fields) {
     if (excel && excel.length && excel[0] && excel[0]['data']) {  //只解析Xlsx文件的第一个sheet
         var field_index = {};
         var cols = excel[0]['data'][0];     //要求第一行为标题行,标题行要与配置的字段值一致,否则不予解析
-        Object.keys(fields).forEach(function (key) {
+
+        var keys = Object.keys(fields);
+        for(let i=0;i<Object.keys(fields).length;i++){
+            let key = keys[i];
             var index = cols.indexOf(key);
-            field_index[fields[key]] = index;
-        });
-        if (Object.keys(field_index).length != Object.keys(fields).length) {
-            return {
-                flag: false,
-                msg: 'Excel格式不符合要求,未能解析!'
+            if(index<0){
+                return {
+                    flag: false,
+                    msg: 'Excel格式不符合要求,未能解析!'
+                }
             }
+            field_index[fields[key]] = index;
         }
+        // Object.keys(fields).forEach(function (key) {
+        //     var index = cols.indexOf(key);
+        //     if(index<0){
+        //         return {
+        //             flag: false,
+        //             msg: 'Excel格式不符合要求,未能解析!'
+        //         }
+        //     }
+        //     field_index[fields[key]] = index;
+        // });
         var list = [];
         var data = excel[0]['data'];
         data.shift();//剔除标题行,只保留数据

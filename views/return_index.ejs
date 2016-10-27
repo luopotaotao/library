@@ -2,7 +2,7 @@
     <input class="easyui-searchbox" data-options="prompt:'请输入图书名称或图书编号或借阅人',searcher:function (name) {
         $('#users_dg').datagrid('load',{name:encodeURIComponent(name)});
     }" style="width:300px;">
-    <a href="#" class="easyui-linkbutton" data-options="plain:false" onclick="$('#return_dlg_confirm').dialog('open')">归还</a>
+    <a href="#" class="easyui-linkbutton" data-options="plain:false,onClick:$.ret.showReturnDialog">归还</a>
 </div>
 <table id="return_dg" style="height: 97%;width: 99%"></table>
 <div id="return_dlg_confirm" class="easyui-dialog" style="width:100%;max-width:700px;"
@@ -31,7 +31,7 @@
         <th data-options="field: 'id', title: 'ID', hidden: true"></th>
         <th data-options="field: 'code', title: '图书编号'"></th>
         <th data-options="field: 'name', title: '图书名称'"></th>
-        <th data-options="field: 'user', title: '借阅人'"></th>
+        <th data-options="field: 'user', title: '借阅人',formatter:function(val){return val.name;}"></th>
         <th data-options="field: 'borrow_date', title: '借阅日期', formatter: function (val, row) {
         return val ? $.formatDate(val,'yyyy-MM-dd hh:mm') : '';
         }"></th>
@@ -67,7 +67,7 @@
 								required:true
 							}
 						}"></th>
-        <th data-options="field: 'null', title: '操作',formatter:function(){return '<a href=\'\'>'+'删除'+'</a>';}"></th>
+        <th data-options="field: 'null', title: '操作',formatter:function(){return '<a href=\'javascript:void(0)\' onclick=\'javascript:$.ret.removeCurrentRow(this)\'>'+'删除'+'</a>';}"></th>
         </thead>
     </table>
 </div>
@@ -134,8 +134,12 @@
         });
 
         function doReturn() {
-            $.messager.progress({title: '数据保存中,请稍后...'});
             var rows = $('#return_dialog_dg').datagrid('getRows');
+            if(!rows||rows.length<1){
+                $.messager.alert('提示','请勾选要归还的数目!');
+                return;
+            }
+            $.messager.progress({title: '数据保存中,请稍后...'});
             var return_set = {};
             $.each(rows,function (i,row) {
                 return_set[row.id] = row['status'];
@@ -166,9 +170,7 @@
         }
 
         function showReturnDialog() {
-            debugger;
             var rows = $('#return_dg').datagrid('getChecked');
-
             if(rows&&rows.length){
                 var $dlg = $('#return_dlg_confirm');
                 $dlg.dialog('open');
@@ -186,11 +188,30 @@
             }
         }
 
+        function removeCurrentRow(target) {
+            var $this = $(target);
+            var index = $this.parents('.datagrid-row').first().attr('datagrid-row-index')
+            var $dg = $this.parents('.datagrid-view').first().find('.datagrid-f');
+            $dg.datagrid('deleteRow',index);
+            var rows = $dg.datagrid('getRows');
+            if(!rows||rows.length<1){
+                $.messager.show({
+                    title:'提示',
+                    msg:'请选择要归还的书目!',
+                    timeout:1500,
+                    showType:'fade'
+                });
+                $('#return_dlg_confirm').dialog('close');
+            }else{
+                $dg.datagrid('loadData',{rows:rows});
+            }
+        }
         $.extend({
             ret: {
                 doReturn: doReturn,
                 closeConfirmDialog: closeConfirmDialog,
-                showReturnDialog:showReturnDialog
+                showReturnDialog:showReturnDialog,
+                removeCurrentRow:removeCurrentRow
             }
         });
 

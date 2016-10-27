@@ -6,7 +6,7 @@ var db = require("./database"),
     seq = db.seq,
     Seq = db.Sequelize;
 var User = seq.define('user', {
-    code: Seq.STRING,
+    code: {type:Seq.STRING,unique:true},
     name: Seq.STRING,
     gender: Seq.ENUM('M', 'F'),//0女,1男
     birth: Seq.DATE,
